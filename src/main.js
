@@ -1,0 +1,13 @@
+// Main JS GWCATAT
+console.log("GWCATAT Vite + Tailwind berhasil dimuat!");
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Inisialisasi awal UI
+  const totalBalance = document.getElementById("totalBalance");
+  const totalIncome = document.getElementById("totalIncome");
+  const totalExpense = document.getElementById("totalExpense");
+
+  if (totalBalance) totalBalance.innerText = "Rp 0";
+  if (totalIncome) totalIncome.innerText = "Rp 0";
+  if (totalExpense) totalExpense.innerText = "Rp 0";
+});
