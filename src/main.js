@@ -1,21 +1,21 @@
 'use strict';
 
 // ================== KONSTANTA ==================
-const COLORS = { teal: "#7A9E7E", amber: "#C89B3C", coral: "#C76D4E", primary: "#264653" };
-const PRIMARY_SOFT = "#F1EFEA";
+var COLORS = { teal: "#7A9E7E", amber: "#C89B3C", coral: "#C76D4E", primary: "#264653" };
+var PRIMARY_SOFT = "#F1EFEA";
 
-const OUT_CATS = [
+var OUT_CATS = [
   { key: "kebutuhan", label: "Kebutuhan", icon: "shopping-bag", color: "#7A9E7E" },
   { key: "keinginan", label: "Keinginan", icon: "sparkles", color: "#C89B3C" },
   { key: "tabungan", label: "Tabungan", icon: "piggy-bank", color: "#264653" },
   { key: "darurat", label: "Dana Darurat", icon: "life-buoy", color: "#C76D4E" },
 ];
-const IN_CATS = [
+var IN_CATS = [
   { key: "uang_jajan", label: "Uang Jajan", icon: "wallet", color: "#7A9E7E" },
   { key: "lainnya", label: "Pemasukan Lain", icon: "plus-circle", color: "#7A9E7E" },
 ];
 
-const TIPS = [
+var TIPS = [
   "Kebutuhan itu yang bikin kamu tetap jalan: ongkos, makan, buku tugas. Keinginan itu yang bikin senang tapi bisa ditunda.",
   "Sebelum beli sesuatu, tanya: kalau ini nggak dibeli sekarang, apa masalahnya besok? Kalau jawabannya 'nggak ada', itu keinginan.",
   "Target aman: minimal 20% uang jajan masuk tabungan duluan, baru sisanya dipakai jalan-jalan.",
@@ -23,7 +23,7 @@ const TIPS = [
   "Kalau dompet & e-wallet sering nyaris nol di akhir bulan, itu tanda perlu rem di pos Keinginan, bukan nambah utang paylater.",
 ];
 
-const POPUP_DATA = {
+var POPUP_DATA = {
   income: { title: "Pemasukan", description: "Total uang yang masuk ke dompet Anda bulan ini. Semakin tinggi, semakin besar ruang gerak keuangan Anda.", shortcut: "pendapatan", shortcutLabel: "Lihat Daftar Pendapatan" },
   expense: { title: "Pengeluaran", description: "Total uang yang keluar bulan ini. Perhatikan komposisinya: kebutuhan, keinginan, tabungan, dan dana darurat.", shortcut: "pengeluaran", shortcutLabel: "Lihat Daftar Pengeluaran" },
   balance: { title: "Sisa di Tangan", description: "Pemasukan dikurangi pengeluaran. Jika negatif, artinya Anda 'boros' dan perlu menekan pos keinginan atau menambah pemasukan.", shortcut: "pengeluaran", shortcutLabel: "Cek Pengeluaran" },
@@ -36,37 +36,37 @@ const POPUP_DATA = {
 };
 
 // ================== STATE ==================
-let state = {
+var state = {
   currentMonth: currentMonthKey(),
   months: {},
 };
-let tipIndex = 0;
-let pieChartInstance = null;
-let lineChartInstance = null;
-let incomeLineInstance = null;
-let expenseLineInstance = null;
-let reportChartInstance = null;
+var tipIndex = 0;
+var pieChartInstance = null;
+var lineChartInstance = null;
+var incomeLineInstance = null;
+var expenseLineInstance = null;
+var reportChartInstance = null;
 
 // ================== HELPERS ==================
 function currentMonthKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, "0");
 }
 
 function shiftMonth(key, delta) {
-  const [y, m] = key.split("-").map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  var parts = key.split("-").map(Number);
+  var d = new Date(parts[0], parts[1] - 1 + delta, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, "0");
 }
 
 function monthLabel(key) {
-  const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  var parts = key.split("-").map(Number);
+  return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 }
 
 function fmtRp(n) {
-  const v = Math.round(Number(n) || 0);
-  return `${v < 0 ? "-" : ""}Rp${Math.abs(v).toLocaleString("id-ID")}`;
+  var v = Math.round(Number(n) || 0);
+  return (v < 0 ? "-" : "") + "Rp" + Math.abs(v).toLocaleString("id-ID");
 }
 
 function uid() {
@@ -74,13 +74,13 @@ function uid() {
 }
 
 function formatRibuan(value) {
-  const num = Math.floor(Math.abs(Number(value)) || 0);
+  var num = Math.floor(Math.abs(Number(value)) || 0);
   return num.toLocaleString("id-ID");
 }
 
 function parseRibuan(value) {
   if (typeof value !== "string") return Math.floor(Number(value) || 0);
-  const digitsOnly = value.replace(/[^0-9]/g, "");
+  var digitsOnly = value.replace(/[^0-9]/g, "");
   return digitsOnly === "" ? 0 : parseInt(digitsOnly, 10);
 }
 
@@ -89,24 +89,21 @@ function attachCurrencyInput(inputElement, onValueChange) {
   inputElement.setAttribute("type", "text");
   inputElement.setAttribute("inputmode", "numeric");
   inputElement.addEventListener("input", function() {
-    const cursorPos = inputElement.selectionStart ?? inputElement.value.length;
-    const rawBeforeFormat = inputElement.value;
-    const digitsBeforeCursor = rawBeforeFormat.slice(0, cursorPos).replace(/[^0-9]/g, "").length;
-    const digitsOnly = rawBeforeFormat.replace(/[^0-9]/g, "");
-    const numericValue = digitsOnly === "" ? 0 : parseInt(digitsOnly, 10);
-    const formatted = digitsOnly === "" ? "" : formatRibuan(numericValue);
+    var cursorPos = inputElement.selectionStart || inputElement.value.length;
+    var raw = inputElement.value;
+    var digitsBefore = raw.slice(0, cursorPos).replace(/[^0-9]/g, "").length;
+    var digits = raw.replace(/[^0-9]/g, "");
+    var numericValue = digits === "" ? 0 : parseInt(digits, 10);
+    var formatted = digits === "" ? "" : formatRibuan(numericValue);
     inputElement.value = formatted;
-    let newCursorPos = formatted.length;
-    let digitCount = 0;
-    for (let i = 0; i < formatted.length; i++) {
-      if (digitCount === digitsBeforeCursor) {
-        newCursorPos = i;
-        break;
-      }
-      if (/[0-9]/.test(formatted[i])) digitCount++;
+    var newPos = formatted.length;
+    var count = 0;
+    for (var i = 0; i < formatted.length; i++) {
+      if (count === digitsBefore) { newPos = i; break; }
+      if (/[0-9]/.test(formatted[i])) count++;
     }
-    if (digitsBeforeCursor === 0) newCursorPos = 0;
-    inputElement.setSelectionRange(newCursorPos, newCursorPos);
+    if (digitsBefore === 0) newPos = 0;
+    inputElement.setSelectionRange(newPos, newPos);
     if (onValueChange) onValueChange(numericValue);
   });
 }
@@ -123,9 +120,9 @@ function getMonthData(key) {
 // ================== PERSISTENSI ==================
 function loadState() {
   try {
-    const raw = localStorage.getItem("gwcatat_tx");
+    var raw = localStorage.getItem("gwcatat_tx");
     if (raw) {
-      const parsed = JSON.parse(raw);
+      var parsed = JSON.parse(raw);
       if (parsed && parsed.months) state = parsed;
     }
   } catch (e) {
@@ -145,15 +142,15 @@ function saveState() {
 }
 
 function setStorageStatus(text) {
-  const el = document.getElementById("storageStatus");
+  var el = document.getElementById("storageStatus");
   if (el) el.textContent = text;
 }
 
 // ================== SIMPAN / MUAT FILE ==================
 function exportToFile() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  var blob = new Blob([JSON.stringify(state, null, 2)], { type: "text/plain" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
   a.href = url;
   a.download = "storage.txt";
   document.body.appendChild(a);
@@ -164,10 +161,10 @@ function exportToFile() {
 }
 
 function importFromFile(file) {
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const parsed = JSON.parse(e.target.result);
+      var parsed = JSON.parse(e.target.result);
       if (!parsed || !parsed.months) throw new Error("Format tidak dikenali");
       state = parsed;
       if (!state.currentMonth) state.currentMonth = currentMonthKey();
@@ -185,30 +182,30 @@ function importFromFile(file) {
 
 // ================== PERHITUNGAN ==================
 function computeMetrics() {
-  const data = getMonthData(state.currentMonth);
-  const tx = data.transactions;
-  const totalIn = tx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + t.amount; }, 0);
-  const effectiveIn = totalIn > 0 ? totalIn : data.allowance;
-  const baseIn = effectiveIn || 1;
-  const sumCat = function(key) {
-    return tx.filter(function(t) { return t.category === key; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var data = getMonthData(state.currentMonth);
+  var tx = data.transactions || [];
+  var totalIn = tx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + (t.amount || 0); }, 0);
+  var effectiveIn = totalIn > 0 ? totalIn : data.allowance;
+  var baseIn = effectiveIn || 1;
+  var sumCat = function(key) {
+    return tx.filter(function(t) { return t.category === key; }).reduce(function(s, t) { return s + (t.amount || 0); }, 0);
   };
-  const totalKebutuhan = sumCat("kebutuhan");
-  const totalKeinginan = sumCat("keinginan");
-  const totalTabungan = sumCat("tabungan");
-  const totalDarurat = sumCat("darurat");
-  const totalOut = totalKebutuhan + totalKeinginan + totalTabungan + totalDarurat;
-  const sisa = totalIn - totalOut;
-  const savingsRatio = (totalTabungan / baseIn) * 100;
-  const lifestyleRatio = (totalKeinginan / baseIn) * 100;
-  const netLiquid = data.kas + data.ewallet - data.utang;
-  const emergencyRatio = data.emergencyTarget > 0 ? (totalDarurat / data.emergencyTarget) * 100 : 0;
-  const savingsScore = Math.min(100, (savingsRatio / 20) * 100);
-  const lifestyleScore = lifestyleRatio <= 30 ? 100 : Math.max(0, 100 - (lifestyleRatio - 30) * 3);
-  const liquidScore = netLiquid >= 0 ? 100 : 0;
-  const emergencyScore = Math.min(100, emergencyRatio);
-  const literacyScore = (savingsScore + lifestyleScore + liquidScore + emergencyScore) / 4;
-  const totalWealth = data.kas + data.ewallet - data.utang + totalTabungan + totalDarurat;
+  var totalKebutuhan = sumCat("kebutuhan");
+  var totalKeinginan = sumCat("keinginan");
+  var totalTabungan = sumCat("tabungan");
+  var totalDarurat = sumCat("darurat");
+  var totalOut = totalKebutuhan + totalKeinginan + totalTabungan + totalDarurat;
+  var sisa = totalIn - totalOut;
+  var savingsRatio = (totalTabungan / baseIn) * 100;
+  var lifestyleRatio = (totalKeinginan / baseIn) * 100;
+  var netLiquid = (data.kas || 0) + (data.ewallet || 0) - (data.utang || 0);
+  var emergencyRatio = data.emergencyTarget > 0 ? (totalDarurat / data.emergencyTarget) * 100 : 0;
+  var savingsScore = Math.min(100, (savingsRatio / 20) * 100);
+  var lifestyleScore = lifestyleRatio <= 30 ? 100 : Math.max(0, 100 - (lifestyleRatio - 30) * 3);
+  var liquidScore = netLiquid >= 0 ? 100 : 0;
+  var emergencyScore = Math.min(100, emergencyRatio);
+  var literacyScore = (savingsScore + lifestyleScore + liquidScore + emergencyScore) / 4;
+  var totalWealth = (data.kas || 0) + (data.ewallet || 0) - (data.utang || 0) + totalTabungan + totalDarurat;
   return {
     totalIn: totalIn,
     totalOut: totalOut,
@@ -233,10 +230,10 @@ function computeMetrics() {
 
 // ================== RENDER ==================
 function renderAll() {
-  const data = getMonthData(state.currentMonth);
-  const monthLabelEl = document.getElementById("monthLabel");
+  var data = getMonthData(state.currentMonth);
+  var monthLabelEl = document.getElementById("monthLabel");
   if (monthLabelEl) monthLabelEl.textContent = monthLabel(state.currentMonth);
-  const allowanceInput = document.getElementById("allowanceInput");
+  var allowanceInput = document.getElementById("allowanceInput");
   if (allowanceInput) allowanceInput.value = data.allowance ? formatRibuan(data.allowance) : "";
   renderSummary();
   renderGauges();
@@ -249,9 +246,9 @@ function renderAll() {
 }
 
 function renderSummary() {
-  const m = computeMetrics();
-  const setText = function(id, val) {
-    const el = document.getElementById(id);
+  var m = computeMetrics();
+  var setText = function(id, val) {
+    var el = document.getElementById(id);
     if (el) el.textContent = val;
   };
   setText("totalIn", fmtRp(m.totalIn));
@@ -274,79 +271,79 @@ function statusFor(value, goodMin, warnMin, inverse) {
 
 function setRing(ringEl, pct, color) {
   if (!ringEl) return;
-  const clamped = Math.max(0, Math.min(100, pct));
+  var clamped = Math.max(0, Math.min(100, pct));
   ringEl.style.background = "conic-gradient(" + color + " " + (clamped * 3.6) + "deg, " + PRIMARY_SOFT + " " + (clamped * 3.6) + "deg)";
 }
 
 function renderGauges() {
-  const m = computeMetrics();
-  const data = getMonthData(state.currentMonth);
-  const sv = statusFor(m.savingsRatio, 20, 10, false);
+  var m = computeMetrics();
+  var data = getMonthData(state.currentMonth);
+  var sv = statusFor(m.savingsRatio, 20, 10, false);
   setRing(document.getElementById("ringSavings"), m.savingsScore, sv.color);
-  const savingsVal = document.getElementById("savingsValue");
+  var savingsVal = document.getElementById("savingsValue");
   if (savingsVal) savingsVal.textContent = Math.round(m.savingsRatio) + "%";
-  const savingsBadge = document.getElementById("savingsBadge");
+  var savingsBadge = document.getElementById("savingsBadge");
   if (savingsBadge) {
     savingsBadge.className = "badge " + sv.badge;
     savingsBadge.textContent = m.savingsRatio >= 20 ? "Sehat" : m.savingsRatio >= 10 ? "Kurang" : "Rendah";
   }
 
-  const ls = statusFor(m.lifestyleRatio, 30, 45, true);
+  var ls = statusFor(m.lifestyleRatio, 30, 45, true);
   setRing(document.getElementById("ringLifestyle"), m.lifestyleScore, ls.color);
-  const lifestyleVal = document.getElementById("lifestyleValue");
+  var lifestyleVal = document.getElementById("lifestyleValue");
   if (lifestyleVal) lifestyleVal.textContent = Math.round(m.lifestyleRatio) + "%";
-  const lifestyleBadge = document.getElementById("lifestyleBadge");
+  var lifestyleBadge = document.getElementById("lifestyleBadge");
   if (lifestyleBadge) {
     lifestyleBadge.className = "badge " + ls.badge;
     lifestyleBadge.textContent = m.lifestyleRatio <= 30 ? "Terkendali" : m.lifestyleRatio <= 45 ? "Waspada" : "Boros";
   }
 
-  const isNeg = m.netLiquid < 0;
-  const scale = Math.max(m.baseIn * 0.5, 50000);
-  const pct = isNeg ? 100 : Math.max(4, Math.min(100, (m.netLiquid / scale) * 100));
-  const tankFill = document.getElementById("tankFill");
+  var isNeg = m.netLiquid < 0;
+  var scale = Math.max(m.baseIn * 0.5, 50000);
+  var pct = isNeg ? 100 : Math.max(4, Math.min(100, (m.netLiquid / scale) * 100));
+  var tankFill = document.getElementById("tankFill");
   if (tankFill) {
     tankFill.style.height = pct + "%";
     tankFill.style.background = isNeg ? "linear-gradient(180deg, rgba(199,109,78,0.75), " + COLORS.coral + ")" : "linear-gradient(180deg, rgba(122,158,126,0.75), " + COLORS.teal + ")";
     tankFill.style.boxShadow = "0 0 14px " + (isNeg ? COLORS.coral : COLORS.teal);
   }
-  const liquidVal = document.getElementById("liquidValue");
+  var liquidVal = document.getElementById("liquidValue");
   if (liquidVal) liquidVal.textContent = fmtRp(m.netLiquid);
-  const liquidBadge = document.getElementById("liquidBadge");
+  var liquidBadge = document.getElementById("liquidBadge");
   if (liquidBadge) {
     liquidBadge.className = "badge " + (isNeg ? "danger" : "");
     liquidBadge.textContent = isNeg ? "Defisit — cek utang" : "Aman & Positif";
   }
 
-  const em = statusFor(m.emergencyRatio, 100, 50, false);
+  var em = statusFor(m.emergencyRatio, 100, 50, false);
   setRing(document.getElementById("ringEmergency"), m.emergencyScore, em.color);
-  const emergencyVal = document.getElementById("emergencyValue");
+  var emergencyVal = document.getElementById("emergencyValue");
   if (emergencyVal) emergencyVal.textContent = Math.round(Math.min(999, m.emergencyRatio)) + "%";
-  const emergencyTargetLabel = document.getElementById("emergencyTargetLabel");
+  var emergencyTargetLabel = document.getElementById("emergencyTargetLabel");
   if (emergencyTargetLabel) emergencyTargetLabel.textContent = "Target " + fmtRp(data.emergencyTarget);
-  const emergencyBadge = document.getElementById("emergencyBadge");
+  var emergencyBadge = document.getElementById("emergencyBadge");
   if (emergencyBadge) {
     emergencyBadge.className = "badge " + em.badge;
     emergencyBadge.textContent = m.emergencyRatio >= 100 ? "Terpenuhi" : m.emergencyRatio >= 50 ? "Menuju" : "Mulai";
   }
 
-  const level = Math.min(5, Math.max(1, Math.floor(m.literacyScore / 20) + 1));
-  const titles = ["Pemula Boros", "Belajar Hemat", "Cukup Cermat", "Jagoan Hemat", "Master Keuangan"];
-  const within = m.literacyScore % 20 === 0 && m.literacyScore > 0 ? 100 : (m.literacyScore % 20) * 5;
-  const levelEl = document.getElementById("levelValue");
+  var level = Math.min(5, Math.max(1, Math.floor(m.literacyScore / 20) + 1));
+  var titles = ["Pemula Boros", "Belajar Hemat", "Cukup Cermat", "Jagoan Hemat", "Master Keuangan"];
+  var within = m.literacyScore % 20 === 0 && m.literacyScore > 0 ? 100 : (m.literacyScore % 20) * 5;
+  var levelEl = document.getElementById("levelValue");
   if (levelEl) levelEl.textContent = "Lv." + level;
-  const xpFill = document.getElementById("xpFill");
+  var xpFill = document.getElementById("xpFill");
   if (xpFill) xpFill.style.width = Math.max(4, within) + "%";
-  const literacyTitle = document.getElementById("literacyTitle");
+  var literacyTitle = document.getElementById("literacyTitle");
   if (literacyTitle) literacyTitle.textContent = titles[level - 1] + " · " + Math.round(m.literacyScore) + "/100";
 }
 
 // ================== RENDER INCOME LIST ==================
 function renderIncomeList() {
-  const data = getMonthData(state.currentMonth);
-  const list = document.getElementById("incomeList");
+  var data = getMonthData(state.currentMonth);
+  var list = document.getElementById("incomeList");
   if (!list) return;
-  const incomes = data.transactions.filter(function(t) { return t.type === "in"; });
+  var incomes = data.transactions.filter(function(t) { return t.type === "in"; });
   if (incomes.length === 0) {
     list.innerHTML = '<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pendapatan bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pendapatan.</p></div>';
     if (typeof lucide !== "undefined") lucide.createIcons();
@@ -354,8 +351,8 @@ function renderIncomeList() {
   }
   list.innerHTML = "";
   incomes.forEach(function(t) {
-    const cat = IN_CATS.find(function(c) { return c.key === t.category; }) || { label: t.category, icon: "plus-circle", color: "#7A9E7E" };
-    const row = document.createElement("div");
+    var cat = IN_CATS.find(function(c) { return c.key === t.category; }) || { label: t.category, icon: "plus-circle", color: "#7A9E7E" };
+    var row = document.createElement("div");
     row.className = "tx-item";
     row.innerHTML = `
       <div class="tx-icon" style="background:${cat.color}1a"><i data-lucide="${cat.icon}" style="color:${cat.color}"></i></div>
@@ -367,8 +364,8 @@ function renderIncomeList() {
   });
   list.querySelectorAll(".tx-delete").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      const id = btn.getAttribute("data-id");
-      const d = getMonthData(state.currentMonth);
+      var id = btn.getAttribute("data-id");
+      var d = getMonthData(state.currentMonth);
       d.transactions = d.transactions.filter(function(t) { return t.id !== id; });
       saveState();
       renderAll();
@@ -379,10 +376,10 @@ function renderIncomeList() {
 
 // ================== RENDER EXPENSE LIST ==================
 function renderExpenseList() {
-  const data = getMonthData(state.currentMonth);
-  const list = document.getElementById("expenseList");
+  var data = getMonthData(state.currentMonth);
+  var list = document.getElementById("expenseList");
   if (!list) return;
-  const expenses = data.transactions.filter(function(t) { return t.type === "out"; });
+  var expenses = data.transactions.filter(function(t) { return t.type === "out"; });
   if (expenses.length === 0) {
     list.innerHTML = '<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pengeluaran bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pengeluaran.</p></div>';
     if (typeof lucide !== "undefined") lucide.createIcons();
@@ -390,8 +387,8 @@ function renderExpenseList() {
   }
   list.innerHTML = "";
   expenses.forEach(function(t) {
-    const cat = OUT_CATS.find(function(c) { return c.key === t.category; }) || { label: t.category, icon: "shopping-bag", color: "#C76D4E" };
-    const row = document.createElement("div");
+    var cat = OUT_CATS.find(function(c) { return c.key === t.category; }) || { label: t.category, icon: "shopping-bag", color: "#C76D4E" };
+    var row = document.createElement("div");
     row.className = "tx-item";
     row.innerHTML = `
       <div class="tx-icon" style="background:${cat.color}1a"><i data-lucide="${cat.icon}" style="color:${cat.color}"></i></div>
@@ -403,8 +400,8 @@ function renderExpenseList() {
   });
   list.querySelectorAll(".tx-delete").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      const id = btn.getAttribute("data-id");
-      const d = getMonthData(state.currentMonth);
+      var id = btn.getAttribute("data-id");
+      var d = getMonthData(state.currentMonth);
       d.transactions = d.transactions.filter(function(t) { return t.id !== id; });
       saveState();
       renderAll();
@@ -415,10 +412,10 @@ function renderExpenseList() {
 
 // ================== ASSET PANEL ==================
 function updateAssetPanel() {
-  const data = getMonthData(state.currentMonth);
-  const m = computeMetrics();
-  const setText = function(id, val) {
-    const el = document.getElementById(id);
+  var data = getMonthData(state.currentMonth);
+  var m = computeMetrics();
+  var setText = function(id, val) {
+    var el = document.getElementById(id);
     if (el) el.textContent = val;
   };
   setText("assetKas", fmtRp(data.kas));
@@ -429,23 +426,35 @@ function updateAssetPanel() {
   setText("assetTargetDarurat", fmtRp(data.emergencyTarget));
 }
 
-// ================== CHART UPDATES ==================
+// ================== CHART UPDATES (DIPERBAIKI) ==================
 function safeDestroy(instance) {
-  if (instance) {
+  if (instance && typeof instance.destroy === "function") {
     try { instance.destroy(); } catch (e) { /* ignore */ }
-    return null;
   }
   return null;
 }
 
 function updateCharts() {
-  const data = getMonthData(state.currentMonth);
-  const tx = data.transactions;
+  var data = getMonthData(state.currentMonth);
+  var tx = data.transactions || [];
 
-    // PIE CHART
-  const totalIn = tx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + t.amount; }, 0);
-  const totalOut = tx.filter(function(t) { return t.type === "out"; }).reduce(function(s, t) { return s + t.amount; }, 0);
-  const pieCtx = document.getElementById("pieChart");
+  // Agregasi harian dengan validasi
+  function aggregateDaily(transactions, type) {
+    var map = {};
+    transactions.forEach(function(t) {
+      if (t.type === type && t.date && typeof t.date === "string" && t.date.length === 10) {
+        var d = t.date;
+        if (!map[d]) map[d] = 0;
+        map[d] += (t.amount || 0);
+      }
+    });
+    return map;
+  }
+
+  // PIE chart
+  var totalIn = tx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + (t.amount || 0); }, 0);
+  var totalOut = tx.filter(function(t) { return t.type === "out"; }).reduce(function(s, t) { return s + (t.amount || 0); }, 0);
+  var pieCtx = document.getElementById("pieChart");
   if (pieCtx) {
     pieChartInstance = safeDestroy(pieChartInstance);
     if (totalIn || totalOut) {
@@ -455,86 +464,94 @@ function updateCharts() {
           labels: ['Pendapatan', 'Pengeluaran'],
           datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#7A9E7E', '#C76D4E'], borderColor: ['#7A9E7E', '#C76D4E'], borderWidth: 1 }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, cutout: '65%', animation: { animateRotate: true, duration: 500 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, cutout: '65%', animation: { animateRotate: true, duration: 400 } }
       });
     }
   }
 
-  // LINE CHART (Tren Harian)
-  var days = {};
+  // LINE CHART (gabungan)
+  var allDays = {};
   tx.forEach(function(t) {
-    var d = t.date;
-    if (!days[d]) days[d] = { in: 0, out: 0 };
-    if (t.type === "in") days[d].in += t.amount;
-    else days[d].out += t.amount;
+    if (t.date && t.date.length === 10) {
+      if (!allDays[t.date]) allDays[t.date] = { in: 0, out: 0 };
+      if (t.type === "in") allDays[t.date].in += (t.amount || 0);
+      else allDays[t.date].out += (t.amount || 0);
+    }
   });
-  var sortedDates = Object.keys(days).sort();
-  var maxPoints = 31;
-  var limitedDates = sortedDates.slice(-maxPoints);
-  var labels = limitedDates.map(function(d) { return d.slice(5); });
-  var inData = limitedDates.map(function(d) { return days[d].in; });
-  var outData = limitedDates.map(function(d) { return days[d].out; });
+  var datesAll = Object.keys(allDays).sort();
+  var limitedAll = datesAll.slice(-31);
+  var labelsAll = limitedAll.map(function(d) { return d.slice(5); });
+  var inData = limitedAll.map(function(d) { return allDays[d].in || 0; });
+  var outData = limitedAll.map(function(d) { return allDays[d].out || 0; });
 
   var lineCtx = document.getElementById("lineChart");
   if (lineCtx) {
     lineChartInstance = safeDestroy(lineChartInstance);
-    if (labels.length > 0) {
+    if (labelsAll.length > 0) {
       lineChartInstance = new Chart(lineCtx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels: labelsAll,
           datasets: [
             { label: 'Pendapatan', data: inData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
             { label: 'Pengeluaran', data: outData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 3 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+          scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } },
+          animation: { duration: 300 }
+        }
       });
     }
   }
 
   // INCOME LINE CHART
-  var incomeDays = {};
-  tx.filter(function(t) { return t.type === "in"; }).forEach(function(t) {
-    var d = t.date;
-    if (!incomeDays[d]) incomeDays[d] = 0;
-    incomeDays[d] += t.amount;
-  });
-  var incomeDates = Object.keys(incomeDays).sort().slice(-maxPoints);
-  var incomeLabels = incomeDates.map(function(d) { return d.slice(5); });
-  var incomeData = incomeDates.map(function(d) { return incomeDays[d]; });
-
+  var incomeMap = aggregateDaily(tx, "in");
   var incomeCtx = document.getElementById("incomeLineChart");
   if (incomeCtx) {
     incomeLineInstance = safeDestroy(incomeLineInstance);
-    if (incomeLabels.length > 0) {
+    var datesInc = Object.keys(incomeMap).sort().slice(-31);
+    if (datesInc.length > 0) {
       incomeLineInstance = new Chart(incomeCtx, {
         type: 'line',
-        data: { labels: incomeLabels, datasets: [{ label: 'Pendapatan', data: incomeData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 3 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+        data: {
+          labels: datesInc.map(function(d) { return d.slice(5); }),
+          datasets: [{ label: 'Pendapatan', data: datesInc.map(function(d) { return incomeMap[d] || 0; }), borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 3 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } },
+          animation: { duration: 300 }
+        }
       });
     }
   }
 
   // EXPENSE LINE CHART
-  var expenseDays = {};
-  tx.filter(function(t) { return t.type === "out"; }).forEach(function(t) {
-    var d = t.date;
-    if (!expenseDays[d]) expenseDays[d] = 0;
-    expenseDays[d] += t.amount;
-  });
-  var expenseDates = Object.keys(expenseDays).sort().slice(-maxPoints);
-  var expenseLabels = expenseDates.map(function(d) { return d.slice(5); });
-  var expenseData = expenseDates.map(function(d) { return expenseDays[d]; });
-
+  var expenseMap = aggregateDaily(tx, "out");
   var expenseCtx = document.getElementById("expenseLineChart");
   if (expenseCtx) {
     expenseLineInstance = safeDestroy(expenseLineInstance);
-    if (expenseLabels.length > 0) {
+    var datesExp = Object.keys(expenseMap).sort().slice(-31);
+    if (datesExp.length > 0) {
       expenseLineInstance = new Chart(expenseCtx, {
         type: 'line',
-        data: { labels: expenseLabels, datasets: [{ label: 'Pengeluaran', data: expenseData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 3 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+        data: {
+          labels: datesExp.map(function(d) { return d.slice(5); }),
+          datasets: [{ label: 'Pengeluaran', data: datesExp.map(function(d) { return expenseMap[d] || 0; }), borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 3 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } },
+          animation: { duration: 300 }
+        }
       });
     }
   }
@@ -568,11 +585,11 @@ function updateReport() {
   for (var monthKey in state.months) {
     var monthData = state.months[monthKey];
     monthData.transactions.forEach(function(t) {
-      if (t.date >= startStr && t.date <= endStr) allTx.push(t);
+      if (t.date && t.date >= startStr && t.date <= endStr) allTx.push(t);
     });
   }
-  var totalIn = allTx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + t.amount; }, 0);
-  var totalOut = allTx.filter(function(t) { return t.type === "out"; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var totalIn = allTx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + (t.amount || 0); }, 0);
+  var totalOut = allTx.filter(function(t) { return t.type === "out"; }).reduce(function(s, t) { return s + (t.amount || 0); }, 0);
   var diff = totalIn - totalOut;
   var count = allTx.length;
   var daysDiff = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
@@ -592,17 +609,18 @@ function updateReport() {
   // Chart report
   var daysMap = {};
   allTx.forEach(function(t) {
-    var d = t.date;
-    if (!daysMap[d]) daysMap[d] = { in: 0, out: 0 };
-    if (t.type === "in") daysMap[d].in += t.amount;
-    else daysMap[d].out += t.amount;
+    if (t.date && t.date.length === 10) {
+      if (!daysMap[t.date]) daysMap[t.date] = { in: 0, out: 0 };
+      if (t.type === "in") daysMap[t.date].in += (t.amount || 0);
+      else daysMap[t.date].out += (t.amount || 0);
+    }
   });
   var sorted = Object.keys(daysMap).sort();
   var maxPoints = 100;
   var limited = sorted.slice(-maxPoints);
   var repLabels = limited.map(function(d) { return d.slice(5); });
-  var repIn = limited.map(function(d) { return daysMap[d].in; });
-  var repOut = limited.map(function(d) { return daysMap[d].out; });
+  var repIn = limited.map(function(d) { return daysMap[d].in || 0; });
+  var repOut = limited.map(function(d) { return daysMap[d].out || 0; });
 
   var reportCtx = document.getElementById("reportChart");
   if (reportCtx) {
@@ -617,7 +635,13 @@ function updateReport() {
             { label: 'Pengeluaran', data: repOut, backgroundColor: 'rgba(199,109,78,0.6)', borderColor: '#C76D4E', borderWidth: 1 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+          scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } },
+          animation: { duration: 300 }
+        }
       });
     }
   }
