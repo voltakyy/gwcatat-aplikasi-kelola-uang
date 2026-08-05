@@ -1,3 +1,334 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+   CUSTOM COMPONENT STYLES (tambahan di luar Tailwind)
+   ============================================================ */
+
+/* ---------- NAV BUTTON ---------- */
+.nav-btn {
+  @apply px-4 py-3 rounded-sm font-semibold text-sm text-charcoal/50 flex items-center gap-2.5 transition-all duration-200 border border-transparent;
+}
+.nav-btn i {
+  @apply w-5 h-5;
+}
+.nav-btn:hover {
+  @apply bg-deep-forest/5 text-charcoal translate-x-1;
+}
+.nav-btn.active {
+  @apply bg-deep-forest text-white shadow-md border-deep-forest translate-x-1;
+}
+.nav-btn.active::before {
+  content: '';
+  @apply absolute -left-1.5 top-1/2 -translate-y-1/2 w-1 h-8 bg-muted-gold rounded-full shadow-glow;
+}
+
+/* ---------- SUMMARY CARD ---------- */
+.summary-card {
+  @apply bg-white/75 backdrop-blur-sm border border-beige rounded-card px-5 py-4 shadow-sm transition-all duration-200 cursor-pointer;
+}
+.summary-card:hover {
+  @apply -translate-y-0.5 shadow-md;
+}
+
+/* ---------- GAUGE CARD ---------- */
+.gauge-card {
+  @apply bg-white/75 backdrop-blur-sm border border-beige rounded-card px-3.5 py-4 flex flex-col items-center text-center gap-2 shadow-sm transition-all duration-200 cursor-pointer;
+}
+.gauge-card:hover {
+  @apply -translate-y-0.5 shadow-md;
+}
+
+.gauge-title {
+  @apply font-display font-semibold text-xs text-deep-forest leading-tight;
+}
+
+/* ---------- RING (lingkaran progress) ---------- */
+.ring {
+  @apply w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500;
+  background: conic-gradient(var(--sage-green) 0deg, var(--soft-stone) 0deg);
+}
+.ring-inner {
+  @apply w-[62px] h-[62px] rounded-full bg-white/85 backdrop-blur-sm border border-beige flex flex-col items-center justify-center gap-0.5;
+}
+.ring-inner i {
+  @apply w-4 h-4 text-deep-forest;
+}
+.ring-inner span {
+  @apply font-mono font-bold text-xs text-charcoal;
+}
+
+/* ---------- TANK (asett likuid) ---------- */
+.tank {
+  @apply w-12 h-[74px] rounded-sm bg-deep-forest/5 border border-sage-green/25 overflow-hidden relative flex-shrink-0;
+}
+.tank-fill {
+  @apply absolute bottom-0 left-0 right-0 transition-all duration-700;
+  height: 10%;
+  background: linear-gradient(180deg, rgba(122, 158, 126, 0.7), #7A9E7E);
+  box-shadow: 0 0 14px rgba(122, 158, 126, 0.3);
+}
+
+/* ---------- LEVEL BADGE (literasi) ---------- */
+.level-badge {
+  @apply w-[84px] h-[74px] rounded-sm bg-gradient-to-br from-deep-forest to-deep-forest/80 shadow-md text-white flex flex-col items-center justify-center gap-0.5 flex-shrink-0;
+}
+.level-badge i {
+  @apply w-4 h-4 text-muted-gold;
+}
+.level-badge span {
+  @apply font-display font-bold text-sm;
+}
+.xp-bar {
+  @apply w-14 h-1 rounded-full bg-white/20 overflow-hidden mt-0.5;
+}
+.xp-fill {
+  @apply h-full bg-muted-gold transition-all duration-500;
+}
+
+/* ---------- BADGE ---------- */
+.badge {
+  @apply inline-block text-[9.5px] font-bold px-3 py-0.5 rounded-full bg-sage-green/15 text-sage-green uppercase tracking-wide;
+}
+.badge.warn {
+  @apply bg-muted-gold/15 text-muted-gold;
+}
+.badge.danger {
+  @apply bg-terracotta/15 text-terracotta;
+}
+
+/* ---------- TRANSACTION LIST ---------- */
+.tx-list {
+  @apply flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1;
+}
+.tx-item {
+  @apply flex items-center gap-3 px-3.5 py-3 rounded-sm bg-white/50 border border-beige transition-colors;
+}
+.tx-item:hover {
+  @apply bg-white/80;
+}
+.tx-icon {
+  @apply w-9 h-9 rounded-xs flex items-center justify-center flex-shrink-0;
+}
+.tx-icon i {
+  @apply w-4 h-4;
+}
+.tx-info {
+  @apply flex-1 min-w-0;
+}
+.tx-info p:first-child {
+  @apply text-sm font-medium text-charcoal truncate;
+}
+.tx-date {
+  @apply text-[11px] text-charcoal/40;
+}
+.tx-amount {
+  @apply font-mono font-bold text-sm whitespace-nowrap text-charcoal;
+}
+.tx-amount.in {
+  @apply text-sage-green;
+}
+.tx-amount.out {
+  @apply text-terracotta;
+}
+.tx-delete {
+  @apply flex-shrink-0 p-1 rounded-full text-charcoal/20 transition-colors;
+}
+.tx-delete:hover {
+  @apply text-terracotta bg-terracotta/10;
+}
+.tx-delete i {
+  @apply w-4 h-4;
+}
+
+/* ---------- EMPTY STATE ---------- */
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 text-center text-charcoal/40;
+}
+.empty-state i {
+  @apply w-8 h-8 text-charcoal/20 mb-2;
+}
+.empty-state p {
+  @apply text-sm;
+}
+.empty-sub {
+  @apply text-xs text-charcoal/30 mt-1;
+}
+
+/* ---------- ASSET ITEM ---------- */
+.asset-item {
+  @apply flex justify-between px-3 py-2.5 bg-white/50 rounded-xs border border-beige text-sm;
+}
+.asset-item .label {
+  @apply text-charcoal/50;
+}
+.asset-item .value {
+  @apply font-mono font-semibold;
+}
+.asset-item .value.gold {
+  @apply text-muted-gold;
+}
+.asset-item .value.green {
+  @apply text-sage-green;
+}
+.asset-item .value.red {
+  @apply text-terracotta;
+}
+
+/* ---------- POPUP ---------- */
+.popup-overlay {
+  @apply fixed inset-0 bg-charcoal/30 backdrop-blur-sm z-[2000] hidden items-center justify-center p-5;
+}
+.popup-overlay.open {
+  @apply flex;
+}
+.popup {
+  @apply bg-white/95 backdrop-blur-xl rounded-card max-w-[480px] w-full p-7 border border-beige shadow-lg relative animate-fadeSlide;
+}
+.popup h3 {
+  @apply font-display font-bold text-lg text-deep-forest flex items-center gap-2.5 mb-3;
+}
+.popup h3 i {
+  @apply w-5 h-5 text-muted-gold;
+}
+.popup p {
+  @apply text-sm leading-relaxed text-charcoal/80 mb-3;
+}
+.close-popup {
+  @apply absolute top-4 right-5 text-2xl text-charcoal/30 hover:text-charcoal transition-colors;
+}
+.shortcut-btn {
+  @apply inline-block px-4 py-2 rounded-full bg-deep-forest text-white font-semibold text-xs transition-all hover:bg-deep-forest/90 hover:-translate-y-0.5;
+}
+
+/* ---------- MODAL ---------- */
+.modal-overlay {
+  @apply fixed inset-0 bg-charcoal/30 backdrop-blur-sm z-[1000] hidden items-center justify-center p-5;
+}
+.modal-overlay.open {
+  @apply flex;
+}
+.modal {
+  @apply bg-white/95 backdrop-blur-xl rounded-card max-w-[480px] w-full p-7 border border-beige shadow-lg relative animate-fadeSlide;
+}
+.modal h3 {
+  @apply font-display font-bold text-lg text-deep-forest flex items-center gap-2.5 mb-4;
+}
+.modal h3 i {
+  @apply w-5 h-5 text-muted-gold;
+}
+.form-group {
+  @apply mb-3.5;
+}
+.form-group label {
+  @apply block text-xs font-semibold text-charcoal/50 mb-1;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  @apply w-full px-3.5 py-2.5 rounded-xs border border-beige bg-white/60 text-sm text-charcoal transition-colors;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  @apply border-muted-gold ring-2 ring-muted-gold/10;
+}
+.form-group textarea {
+  @apply resize-y min-h-[60px];
+}
+.modal-actions {
+  @apply flex gap-2.5 justify-end mt-4;
+}
+.btn-secondary {
+  @apply px-5 py-2.5 rounded-full bg-soft-stone text-charcoal font-semibold text-sm transition-colors;
+}
+.btn-secondary:hover {
+  @apply bg-soft-stone/80;
+}
+.btn-primary {
+  @apply px-6 py-2.5 rounded-full bg-deep-forest text-white font-semibold text-sm transition-all shadow-md;
+}
+.btn-primary:hover {
+  @apply bg-deep-forest/90 -translate-y-0.5;
+}
+
+/* ---------- REPORT ---------- */
+.report-stat {
+  @apply bg-white/70 border border-beige rounded-sm px-4 py-3.5 text-center;
+}
+.stat-label {
+  @apply text-[11px] text-charcoal/40 uppercase tracking-wide;
+}
+.stat-value {
+  @apply font-mono font-bold text-lg text-charcoal mt-1;
+}
+.stat-value.gold {
+  @apply text-muted-gold;
+}
+.stat-value.green {
+  @apply text-sage-green;
+}
+.stat-value.red {
+  @apply text-terracotta;
+}
+
+/* ---------- WEALTH DETAIL ---------- */
+.wealth-detail-grid {
+  @apply grid grid-cols-2 gap-2.5 my-3;
+}
+.wealth-detail-item {
+  @apply flex justify-between px-3 py-2 bg-white/50 rounded-xs border border-beige text-sm;
+}
+.wealth-detail-item .label {
+  @apply text-charcoal/50;
+}
+.wealth-detail-item .value {
+  @apply font-mono font-semibold;
+}
+.wealth-detail-item .value.gold {
+  @apply text-muted-gold;
+}
+.wealth-detail-item .value.green {
+  @apply text-sage-green;
+}
+.wealth-detail-item .value.red {
+  @apply text-terracotta;
+}
+
+/* ---------- TARGET BOX ---------- */
+.target-box {
+  @apply flex flex-wrap items-center gap-3 bg-muted-gold/5 border border-muted-gold/15 rounded-sm px-4 py-3;
+}
+.target-box label {
+  @apply font-semibold text-sm text-deep-forest flex items-center gap-1.5;
+}
+.target-box label i {
+  @apply w-4 h-4 text-muted-gold;
+}
+.target-box input {
+  @apply flex-1 min-w-[100px] px-3 py-1.5 border border-beige rounded-lg bg-white/60 font-mono font-bold text-sm;
+}
+.target-box input:focus {
+  @apply border-muted-gold ring-2 ring-muted-gold/10;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeSlide {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeSlide {
+  animation: fadeSlide 0.3s ease;
+}
+
+/* ---------- SCROLLBAR ---------- */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-soft-stone rounded-full;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-gold rounded-full;
+  }
