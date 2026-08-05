@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================================
-   CUSTOM COMPONENT STYLES (tambahan di luar Tailwind)
+   CUSTOM COMPONENT STYLES
    ============================================================ */
 
 /* ---------- NAV BUTTON ---------- */
@@ -19,9 +19,19 @@
 .nav-btn.active {
   @apply bg-deep-forest text-white shadow-md border-deep-forest translate-x-1;
 }
+
+/* Perbaikan: gunakan CSS murni, bukan @apply shadow-glow */
 .nav-btn.active::before {
   content: '';
-  @apply absolute -left-1.5 top-1/2 -translate-y-1/2 w-1 h-8 bg-muted-gold rounded-full shadow-glow;
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 30px;
+  background: #C89B3C; /* muted-gold */
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(200, 155, 60, 0.5);
 }
 
 /* ---------- SUMMARY CARD ---------- */
@@ -59,7 +69,7 @@
   @apply font-mono font-bold text-xs text-charcoal;
 }
 
-/* ---------- TANK (asett likuid) ---------- */
+/* ---------- TANK ---------- */
 .tank {
   @apply w-12 h-[74px] rounded-sm bg-deep-forest/5 border border-sage-green/25 overflow-hidden relative flex-shrink-0;
 }
@@ -70,7 +80,7 @@
   box-shadow: 0 0 14px rgba(122, 158, 126, 0.3);
 }
 
-/* ---------- LEVEL BADGE (literasi) ---------- */
+/* ---------- LEVEL BADGE ---------- */
 .level-badge {
   @apply w-[84px] h-[74px] rounded-sm bg-gradient-to-br from-deep-forest to-deep-forest/80 shadow-md text-white flex flex-col items-center justify-center gap-0.5 flex-shrink-0;
 }
@@ -331,4 +341,4 @@
 }
 ::-webkit-scrollbar-thumb {
   @apply bg-muted-gold rounded-full;
-  }
+   }
