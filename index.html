@@ -166,13 +166,20 @@
 
           <!-- CHARTS -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-4 shadow-sm">
+            <!-- Card Pie Chart -->
+            <div class="chart-box bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-4 shadow-sm min-h-0">
               <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="pie-chart" class="w-4 h-4 text-muted-gold"></i> Perbandingan</h4>
-              <canvas id="pieChart" width="300" height="200"></canvas>
+              <!-- Wrapper canvas dengan tinggi tetap -->
+              <div class="relative w-full h-64 md:h-72">
+                <canvas id="pieChart"></canvas>
+              </div>
             </div>
-            <div class="bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-4 shadow-sm">
+            <!-- Card Line Chart -->
+            <div class="chart-box bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-4 shadow-sm min-h-0">
               <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="trending-up" class="w-4 h-4 text-muted-gold"></i> Tren Harian</h4>
-              <canvas id="lineChart" width="300" height="200"></canvas>
+              <div class="relative w-full h-64 md:h-72">
+                <canvas id="lineChart"></canvas>
+              </div>
             </div>
           </div>
 
@@ -202,8 +209,10 @@
             <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-up-circle" class="w-5 h-5 text-muted-gold"></i> Pendapatan</h2>
             <button id="btnAddIncome" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pendapatan</button>
           </div>
-          <div class="bg-white/50 border border-beige rounded-xl p-3">
-            <canvas id="incomeLineChart" width="400" height="100"></canvas>
+          <div class="bg-white/50 border border-beige rounded-xl p-3 min-h-0">
+            <div class="relative w-full h-48 md:h-56">
+              <canvas id="incomeLineChart"></canvas>
+            </div>
           </div>
           <div id="incomeList" class="tx-list space-y-2">
             <div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pendapatan bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pendapatan.</p></div>
@@ -221,8 +230,10 @@
             <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" class="flex-1 min-w-[100px] px-3 py-1.5 border border-beige rounded-lg bg-white/60 font-mono font-bold text-sm" />
             <span class="text-xs text-charcoal/40">(panduan pengeluaran)</span>
           </div>
-          <div class="bg-white/50 border border-beige rounded-xl p-3">
-            <canvas id="expenseLineChart" width="400" height="100"></canvas>
+          <div class="bg-white/50 border border-beige rounded-xl p-3 min-h-0">
+            <div class="relative w-full h-48 md:h-56">
+              <canvas id="expenseLineChart"></canvas>
+            </div>
           </div>
           <div id="expenseList" class="tx-list space-y-2">
             <div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pengeluaran bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pengeluaran.</p></div>
@@ -251,8 +262,10 @@
             <div class="report-stat"><div class="stat-label">Rata-rata Harian</div><div id="repAvg" class="stat-value">Rp0</div></div>
             <div class="report-stat"><div class="stat-label">Transaksi</div><div id="repCount" class="stat-value">0</div></div>
           </div>
-          <div class="bg-white/70 border border-beige rounded-2xl p-4">
-            <canvas id="reportChart" width="600" height="250"></canvas>
+          <div class="bg-white/70 border border-beige rounded-2xl p-4 min-h-0">
+            <div class="relative w-full h-64 md:h-80">
+              <canvas id="reportChart"></canvas>
+            </div>
           </div>
         </div>
 
@@ -285,7 +298,7 @@
         <h3><i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Tambah Pendapatan</h3>
         <div class="form-group"><label>Tanggal</label><input type="date" id="incomeDate" /></div>
         <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="incomeAmount" placeholder="0" /></div>
-        <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="incomeNote" placeholder="Misal: gaji, kiriman orang tua" /></div>
+              <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="incomeNote" placeholder="Misal: gaji, kiriman orang tua" /></div>
         <div class="modal-actions"><button id="modalIncomeCancel" class="btn-secondary">Batal</button><button id="modalIncomeSave" class="btn-primary">Simpan</button></div>
       </div>
     </div>
@@ -294,7 +307,7 @@
     MODAL TAMBAH PENGELUARAN
     ============================================================ -->
     <div id="modalExpense" class="modal-overlay">
-         <div class="modal">
+      <div class="modal">
         <h3><i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Tambah Pengeluaran</h3>
         <div class="form-group"><label>Tanggal</label><input type="date" id="expenseDate" /></div>
         <div class="form-group"><label>Kategori</label>
