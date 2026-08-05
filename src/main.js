@@ -1,3 +1,5 @@
+'use strict';
+
 // ================== KONSTANTA ==================
 const COLORS = { teal: "#7A9E7E", amber: "#C89B3C", coral: "#C76D4E", primary: "#264653" };
 const PRIMARY_SOFT = "#F1EFEA";
@@ -39,41 +41,54 @@ let state = {
   months: {},
 };
 let tipIndex = 0;
-let pieChartInstance = null, lineChartInstance = null, incomeLineInstance = null, expenseLineInstance = null, reportChartInstance = null;
+let pieChartInstance = null;
+let lineChartInstance = null;
+let incomeLineInstance = null;
+let expenseLineInstance = null;
+let reportChartInstance = null;
 
 // ================== HELPERS ==================
 function currentMonthKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+
 function shiftMonth(key, delta) {
   const [y, m] = key.split("-").map(Number);
   const d = new Date(y, m - 1 + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+
 function monthLabel(key) {
   const [y, m] = key.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 }
+
 function fmtRp(n) {
   const v = Math.round(Number(n) || 0);
   return `${v < 0 ? "-" : ""}Rp${Math.abs(v).toLocaleString("id-ID")}`;
 }
-function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
 function formatRibuan(value) {
   const num = Math.floor(Math.abs(Number(value)) || 0);
   return num.toLocaleString("id-ID");
 }
+
 function parseRibuan(value) {
   if (typeof value !== "string") return Math.floor(Number(value) || 0);
   const digitsOnly = value.replace(/[^0-9]/g, "");
   return digitsOnly === "" ? 0 : parseInt(digitsOnly, 10);
 }
+
 function attachCurrencyInput(inputElement, onValueChange) {
   if (!inputElement) return;
   inputElement.setAttribute("type", "text");
   inputElement.setAttribute("inputmode", "numeric");
-  inputElement.addEventListener("input", () => {
+  inputElement.addEventListener("input", function() {
     const cursorPos = inputElement.selectionStart ?? inputElement.value.length;
     const rawBeforeFormat = inputElement.value;
     const digitsBeforeCursor = rawBeforeFormat.slice(0, cursorPos).replace(/[^0-9]/g, "").length;
@@ -84,7 +99,10 @@ function attachCurrencyInput(inputElement, onValueChange) {
     let newCursorPos = formatted.length;
     let digitCount = 0;
     for (let i = 0; i < formatted.length; i++) {
-      if (digitCount === digitsBeforeCursor) { newCursorPos = i; break; }
+      if (digitCount === digitsBeforeCursor) {
+        newCursorPos = i;
+        break;
+      }
       if (/[0-9]/.test(formatted[i])) digitCount++;
     }
     if (digitsBeforeCursor === 0) newCursorPos = 0;
@@ -96,6 +114,7 @@ function attachCurrencyInput(inputElement, onValueChange) {
 function defaultMonthData() {
   return { allowance: 0, emergencyTarget: 200000, kas: 0, ewallet: 0, utang: 0, transactions: [] };
 }
+
 function getMonthData(key) {
   if (!state.months[key]) state.months[key] = defaultMonthData();
   return state.months[key];
@@ -109,16 +128,22 @@ function loadState() {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.months) state = parsed;
     }
-  } catch (e) { console.warn("Gagal muat data lokal:", e); }
+  } catch (e) {
+    console.warn("Gagal muat data lokal:", e);
+  }
   if (!state.currentMonth) state.currentMonth = currentMonthKey();
   getMonthData(state.currentMonth);
 }
+
 function saveState() {
   try {
     localStorage.setItem("gwcatat_tx", JSON.stringify(state));
     setStorageStatus("Siap");
-  } catch (e) { setStorageStatus("Gagal simpan"); }
+  } catch (e) {
+    setStorageStatus("Gagal simpan");
+  }
 }
+
 function setStorageStatus(text) {
   const el = document.getElementById("storageStatus");
   if (el) el.textContent = text;
@@ -137,9 +162,10 @@ function exportToFile() {
   URL.revokeObjectURL(url);
   setStorageStatus("storage.txt disimpan");
 }
+
 function importFromFile(file) {
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = function(e) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed || !parsed.months) throw new Error("Format tidak dikenali");
@@ -161,10 +187,12 @@ function importFromFile(file) {
 function computeMetrics() {
   const data = getMonthData(state.currentMonth);
   const tx = data.transactions;
-  const totalIn = tx.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
+  const totalIn = tx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + t.amount; }, 0);
   const effectiveIn = totalIn > 0 ? totalIn : data.allowance;
   const baseIn = effectiveIn || 1;
-  const sumCat = (key) => tx.filter(t => t.category === key).reduce((s, t) => s + t.amount, 0);
+  const sumCat = function(key) {
+    return tx.filter(function(t) { return t.category === key; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  };
   const totalKebutuhan = sumCat("kebutuhan");
   const totalKeinginan = sumCat("keinginan");
   const totalTabungan = sumCat("tabungan");
@@ -181,9 +209,26 @@ function computeMetrics() {
   const emergencyScore = Math.min(100, emergencyRatio);
   const literacyScore = (savingsScore + lifestyleScore + liquidScore + emergencyScore) / 4;
   const totalWealth = data.kas + data.ewallet - data.utang + totalTabungan + totalDarurat;
-  return { totalIn, totalOut, sisa, baseIn, totalKebutuhan, totalKeinginan, totalTabungan, totalDarurat,
-    savingsRatio, lifestyleRatio, netLiquid, emergencyRatio, savingsScore, lifestyleScore, liquidScore, emergencyScore,
-    literacyScore, totalWealth };
+  return {
+    totalIn: totalIn,
+    totalOut: totalOut,
+    sisa: sisa,
+    baseIn: baseIn,
+    totalKebutuhan: totalKebutuhan,
+    totalKeinginan: totalKeinginan,
+    totalTabungan: totalTabungan,
+    totalDarurat: totalDarurat,
+    savingsRatio: savingsRatio,
+    lifestyleRatio: lifestyleRatio,
+    netLiquid: netLiquid,
+    emergencyRatio: emergencyRatio,
+    savingsScore: savingsScore,
+    lifestyleScore: lifestyleScore,
+    liquidScore: liquidScore,
+    emergencyScore: emergencyScore,
+    literacyScore: literacyScore,
+    totalWealth: totalWealth
+  };
 }
 
 // ================== RENDER ==================
@@ -205,7 +250,10 @@ function renderAll() {
 
 function renderSummary() {
   const m = computeMetrics();
-  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setText = function(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
   setText("totalIn", fmtRp(m.totalIn));
   setText("totalOut", fmtRp(m.totalOut));
   setText("sisaSaldo", fmtRp(m.sisa));
@@ -227,7 +275,7 @@ function statusFor(value, goodMin, warnMin, inverse) {
 function setRing(ringEl, pct, color) {
   if (!ringEl) return;
   const clamped = Math.max(0, Math.min(100, pct));
-  ringEl.style.background = `conic-gradient(${color} ${clamped * 3.6}deg, ${PRIMARY_SOFT} ${clamped * 3.6}deg)`;
+  ringEl.style.background = "conic-gradient(" + color + " " + (clamped * 3.6) + "deg, " + PRIMARY_SOFT + " " + (clamped * 3.6) + "deg)";
 }
 
 function renderGauges() {
@@ -236,7 +284,7 @@ function renderGauges() {
   const sv = statusFor(m.savingsRatio, 20, 10, false);
   setRing(document.getElementById("ringSavings"), m.savingsScore, sv.color);
   const savingsVal = document.getElementById("savingsValue");
-  if (savingsVal) savingsVal.textContent = `${Math.round(m.savingsRatio)}%`;
+  if (savingsVal) savingsVal.textContent = Math.round(m.savingsRatio) + "%";
   const savingsBadge = document.getElementById("savingsBadge");
   if (savingsBadge) {
     savingsBadge.className = "badge " + sv.badge;
@@ -246,7 +294,7 @@ function renderGauges() {
   const ls = statusFor(m.lifestyleRatio, 30, 45, true);
   setRing(document.getElementById("ringLifestyle"), m.lifestyleScore, ls.color);
   const lifestyleVal = document.getElementById("lifestyleValue");
-  if (lifestyleVal) lifestyleVal.textContent = `${Math.round(m.lifestyleRatio)}%`;
+  if (lifestyleVal) lifestyleVal.textContent = Math.round(m.lifestyleRatio) + "%";
   const lifestyleBadge = document.getElementById("lifestyleBadge");
   if (lifestyleBadge) {
     lifestyleBadge.className = "badge " + ls.badge;
@@ -258,9 +306,9 @@ function renderGauges() {
   const pct = isNeg ? 100 : Math.max(4, Math.min(100, (m.netLiquid / scale) * 100));
   const tankFill = document.getElementById("tankFill");
   if (tankFill) {
-    tankFill.style.height = `${pct}%`;
-    tankFill.style.background = isNeg ? `linear-gradient(180deg, rgba(199,109,78,0.75), ${COLORS.coral})` : `linear-gradient(180deg, rgba(122,158,126,0.75), ${COLORS.teal})`;
-    tankFill.style.boxShadow = `0 0 14px ${isNeg ? COLORS.coral : COLORS.teal}`;
+    tankFill.style.height = pct + "%";
+    tankFill.style.background = isNeg ? "linear-gradient(180deg, rgba(199,109,78,0.75), " + COLORS.coral + ")" : "linear-gradient(180deg, rgba(122,158,126,0.75), " + COLORS.teal + ")";
+    tankFill.style.boxShadow = "0 0 14px " + (isNeg ? COLORS.coral : COLORS.teal);
   }
   const liquidVal = document.getElementById("liquidValue");
   if (liquidVal) liquidVal.textContent = fmtRp(m.netLiquid);
@@ -273,9 +321,9 @@ function renderGauges() {
   const em = statusFor(m.emergencyRatio, 100, 50, false);
   setRing(document.getElementById("ringEmergency"), m.emergencyScore, em.color);
   const emergencyVal = document.getElementById("emergencyValue");
-  if (emergencyVal) emergencyVal.textContent = `${Math.round(Math.min(999, m.emergencyRatio))}%`;
+  if (emergencyVal) emergencyVal.textContent = Math.round(Math.min(999, m.emergencyRatio)) + "%";
   const emergencyTargetLabel = document.getElementById("emergencyTargetLabel");
-  if (emergencyTargetLabel) emergencyTargetLabel.textContent = `Target ${fmtRp(data.emergencyTarget)}`;
+  if (emergencyTargetLabel) emergencyTargetLabel.textContent = "Target " + fmtRp(data.emergencyTarget);
   const emergencyBadge = document.getElementById("emergencyBadge");
   if (emergencyBadge) {
     emergencyBadge.className = "badge " + em.badge;
@@ -286,11 +334,11 @@ function renderGauges() {
   const titles = ["Pemula Boros", "Belajar Hemat", "Cukup Cermat", "Jagoan Hemat", "Master Keuangan"];
   const within = m.literacyScore % 20 === 0 && m.literacyScore > 0 ? 100 : (m.literacyScore % 20) * 5;
   const levelEl = document.getElementById("levelValue");
-  if (levelEl) levelEl.textContent = `Lv.${level}`;
+  if (levelEl) levelEl.textContent = "Lv." + level;
   const xpFill = document.getElementById("xpFill");
-  if (xpFill) xpFill.style.width = `${Math.max(4, within)}%`;
+  if (xpFill) xpFill.style.width = Math.max(4, within) + "%";
   const literacyTitle = document.getElementById("literacyTitle");
-  if (literacyTitle) literacyTitle.textContent = `${titles[level - 1]} · ${Math.round(m.literacyScore)}/100`;
+  if (literacyTitle) literacyTitle.textContent = titles[level - 1] + " · " + Math.round(m.literacyScore) + "/100";
 }
 
 // ================== RENDER INCOME LIST ==================
@@ -298,15 +346,15 @@ function renderIncomeList() {
   const data = getMonthData(state.currentMonth);
   const list = document.getElementById("incomeList");
   if (!list) return;
-  const incomes = data.transactions.filter(t => t.type === "in");
+  const incomes = data.transactions.filter(function(t) { return t.type === "in"; });
   if (incomes.length === 0) {
-    list.innerHTML = `<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pendapatan bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pendapatan.</p></div>`;
+    list.innerHTML = '<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pendapatan bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pendapatan.</p></div>';
     if (typeof lucide !== "undefined") lucide.createIcons();
     return;
   }
   list.innerHTML = "";
-  incomes.forEach(t => {
-    const cat = IN_CATS.find(c => c.key === t.category) || { label: t.category, icon: "plus-circle", color: "#7A9E7E" };
+  incomes.forEach(function(t) {
+    const cat = IN_CATS.find(function(c) { return c.key === t.category; }) || { label: t.category, icon: "plus-circle", color: "#7A9E7E" };
     const row = document.createElement("div");
     row.className = "tx-item";
     row.innerHTML = `
@@ -317,11 +365,11 @@ function renderIncomeList() {
     `;
     list.appendChild(row);
   });
-  list.querySelectorAll(".tx-delete").forEach(btn => {
-    btn.addEventListener("click", () => {
+  list.querySelectorAll(".tx-delete").forEach(function(btn) {
+    btn.addEventListener("click", function() {
       const id = btn.getAttribute("data-id");
       const d = getMonthData(state.currentMonth);
-      d.transactions = d.transactions.filter(t => t.id !== id);
+      d.transactions = d.transactions.filter(function(t) { return t.id !== id; });
       saveState();
       renderAll();
     });
@@ -334,15 +382,15 @@ function renderExpenseList() {
   const data = getMonthData(state.currentMonth);
   const list = document.getElementById("expenseList");
   if (!list) return;
-  const expenses = data.transactions.filter(t => t.type === "out");
+  const expenses = data.transactions.filter(function(t) { return t.type === "out"; });
   if (expenses.length === 0) {
-    list.innerHTML = `<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pengeluaran bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pengeluaran.</p></div>`;
+    list.innerHTML = '<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pengeluaran bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pengeluaran.</p></div>';
     if (typeof lucide !== "undefined") lucide.createIcons();
     return;
   }
   list.innerHTML = "";
-  expenses.forEach(t => {
-    const cat = OUT_CATS.find(c => c.key === t.category) || { label: t.category, icon: "shopping-bag", color: "#C76D4E" };
+  expenses.forEach(function(t) {
+    const cat = OUT_CATS.find(function(c) { return c.key === t.category; }) || { label: t.category, icon: "shopping-bag", color: "#C76D4E" };
     const row = document.createElement("div");
     row.className = "tx-item";
     row.innerHTML = `
@@ -353,11 +401,11 @@ function renderExpenseList() {
     `;
     list.appendChild(row);
   });
-  list.querySelectorAll(".tx-delete").forEach(btn => {
-    btn.addEventListener("click", () => {
+  list.querySelectorAll(".tx-delete").forEach(function(btn) {
+    btn.addEventListener("click", function() {
       const id = btn.getAttribute("data-id");
       const d = getMonthData(state.currentMonth);
-      d.transactions = d.transactions.filter(t => t.id !== id);
+      d.transactions = d.transactions.filter(function(t) { return t.id !== id; });
       saveState();
       renderAll();
     });
@@ -369,7 +417,10 @@ function renderExpenseList() {
 function updateAssetPanel() {
   const data = getMonthData(state.currentMonth);
   const m = computeMetrics();
-  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setText = function(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
   setText("assetKas", fmtRp(data.kas));
   setText("assetEwallet", fmtRp(data.ewallet));
   setText("assetUtang", fmtRp(data.utang));
@@ -378,7 +429,7 @@ function updateAssetPanel() {
   setText("assetTargetDarurat", fmtRp(data.emergencyTarget));
 }
 
-// ================== CHART UPDATES (DIPERBAIKI) ==================
+// ================== CHART UPDATES ==================
 function safeDestroy(instance) {
   if (instance) {
     try { instance.destroy(); } catch (e) { /* ignore */ }
@@ -391,9 +442,9 @@ function updateCharts() {
   const data = getMonthData(state.currentMonth);
   const tx = data.transactions;
 
-  // --- PIE CHART ---
-  const totalIn = tx.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
-  const totalOut = tx.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
+    // PIE CHART
+  const totalIn = tx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  const totalOut = tx.filter(function(t) { return t.type === "out"; }).reduce(function(s, t) { return s + t.amount; }, 0);
   const pieCtx = document.getElementById("pieChart");
   if (pieCtx) {
     pieChartInstance = safeDestroy(pieChartInstance);
@@ -404,272 +455,385 @@ function updateCharts() {
           labels: ['Pendapatan', 'Pengeluaran'],
           datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#7A9E7E', '#C76D4E'], borderColor: ['#7A9E7E', '#C76D4E'], borderWidth: 1 }]
         },
-        position: absolute;
-  top: 16px;
-  right: 20px;
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  color: rgba(44, 42, 38, 0.4);
-  transition: color 0.2s;
-}
-.close-popup:hover {
-  color: #2D2D2D;
-}
-.shortcut-btn {
-  display: inline-block;
-  padding: 8px 18px;
-  border-radius: 40px;
-  background: #264653;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.75rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.25s;
-}
-.shortcut-btn:hover {
-  background: #1d3a47;
-  transform: translateY(-2px);
-}
-
-/* ---------- MODAL ---------- */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(44, 42, 38, 0.3);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.modal-overlay.open {
-  display: flex;
-}
-.modal {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 28px 32px;
-  max-width: 480px;
-  width: 100%;
-  box-shadow: 0 16px 56px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(44, 42, 38, 0.08);
-  animation: fadeSlide 0.3s ease;
-  position: relative;
-}
-.modal h3 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #264653;
-  margin-bottom: 1.125rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-.modal h3 i {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: #C89B3C;
-}
-.form-group {
-  margin-bottom: 0.875rem;
-}
-.form-group label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(44, 42, 38, 0.6);
-  margin-bottom: 4px;
-}
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  border-radius: 10px;
-  border: 1px solid rgba(44, 42, 38, 0.08);
-  background: rgba(255, 255, 255, 0.6);
-  font-size: 0.8125rem;
-  color: #2D2D2D;
-  transition: border-color 0.2s;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: #C89B3C;
-  box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.08);
-}
-.form-group textarea {
-  resize: vertical;
-  min-height: 60px;
-}
-.modal-actions {
-  display: flex;
-  gap: 0.625rem;
-  margin-top: 1.125rem;
-  justify-content: flex-end;
-}
-.btn-secondary {
-  padding: 0.625rem 1.25rem;
-  border-radius: 40px;
-  background: #F1EFEA;
-  color: #2D2D2D;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.btn-secondary:hover {
-  background: #d6d2ca;
-}
-.btn-primary {
-  padding: 0.625rem 1.5rem;
-  border-radius: 40px;
-  background: #264653;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.25s;
-  box-shadow: 0 4px 14px rgba(38, 70, 83, 0.15);
-}
-.btn-primary:hover {
-  background: #1d3a47;
-  transform: translateY(-1px);
-}
-
-/* ---------- REPORT ---------- */
-.report-stat {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(44, 42, 38, 0.08);
-  border-radius: 14px;
-  padding: 0.875rem 1rem;
-  text-align: center;
-}
-.stat-label {
-  font-size: 0.6875rem;
-  color: rgba(44, 42, 38, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.stat-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 1.125rem;
-  color: #2D2D2D;
-  margin-top: 4px;
-}
-.stat-value.gold {
-  color: #C89B3C;
-}
-.stat-value.green {
-  color: #7A9E7E;
-}
-.stat-value.red {
-  color: #C76D4E;
-}
-
-/* ---------- WEALTH DETAIL ---------- */
-.wealth-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.625rem;
-  margin: 0.75rem 0;
-}
-.wealth-detail-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  border: 1px solid rgba(44, 42, 38, 0.08);
-  font-size: 0.8125rem;
-}
-.wealth-detail-item .label {
-  color: rgba(44, 42, 38, 0.6);
-}
-.wealth-detail-item .value {
-  font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
-}
-.wealth-detail-item .value.gold {
-  color: #C89B3C;
-}
-.wealth-detail-item .value.green {
-  color: #7A9E7E;
-}
-.wealth-detail-item .value.red {
-  color: #C76D4E;
-}
-
-/* ---------- TARGET BOX ---------- */
-.target-box {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(200, 155, 60, 0.06);
-  border: 1px solid rgba(200, 155, 60, 0.15);
-  border-radius: 14px;
-  padding: 0.75rem 1rem;
-}
-.target-box label {
-  font-weight: 600;
-  font-size: 0.8125rem;
-  color: #264653;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-.target-box label i {
-  width: 1rem;
-  height: 1rem;
-  color: #C89B3C;
-}
-.target-box input {
-  flex: 1;
-  min-width: 120px;
-  padding: 0.5rem 0.875rem;
-  border-radius: 10px;
-  border: 1px solid rgba(44, 42, 38, 0.08);
-  background: rgba(255, 255, 255, 0.6);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #2D2D2D;
-}
-.target-box input:focus {
-  border-color: #C89B3C;
-  box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.1);
-}
-
-/* ---------- ANIMATIONS ---------- */
-@keyframes fadeSlide {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeSlide {
-  animation: fadeSlide 0.3s ease;
-}
-
-/* ---------- SCROLLBAR ---------- */
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  background: #F1EFEA;
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: #C89B3C;
-  border-radius: 10px;
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, cutout: '65%', animation: { animateRotate: true, duration: 500 } }
+      });
     }
+  }
+
+  // LINE CHART (Tren Harian)
+  var days = {};
+  tx.forEach(function(t) {
+    var d = t.date;
+    if (!days[d]) days[d] = { in: 0, out: 0 };
+    if (t.type === "in") days[d].in += t.amount;
+    else days[d].out += t.amount;
+  });
+  var sortedDates = Object.keys(days).sort();
+  var maxPoints = 31;
+  var limitedDates = sortedDates.slice(-maxPoints);
+  var labels = limitedDates.map(function(d) { return d.slice(5); });
+  var inData = limitedDates.map(function(d) { return days[d].in; });
+  var outData = limitedDates.map(function(d) { return days[d].out; });
+
+  var lineCtx = document.getElementById("lineChart");
+  if (lineCtx) {
+    lineChartInstance = safeDestroy(lineChartInstance);
+    if (labels.length > 0) {
+      lineChartInstance = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Pendapatan', data: inData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+            { label: 'Pengeluaran', data: outData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+      });
+    }
+  }
+
+  // INCOME LINE CHART
+  var incomeDays = {};
+  tx.filter(function(t) { return t.type === "in"; }).forEach(function(t) {
+    var d = t.date;
+    if (!incomeDays[d]) incomeDays[d] = 0;
+    incomeDays[d] += t.amount;
+  });
+  var incomeDates = Object.keys(incomeDays).sort().slice(-maxPoints);
+  var incomeLabels = incomeDates.map(function(d) { return d.slice(5); });
+  var incomeData = incomeDates.map(function(d) { return incomeDays[d]; });
+
+  var incomeCtx = document.getElementById("incomeLineChart");
+  if (incomeCtx) {
+    incomeLineInstance = safeDestroy(incomeLineInstance);
+    if (incomeLabels.length > 0) {
+      incomeLineInstance = new Chart(incomeCtx, {
+        type: 'line',
+        data: { labels: incomeLabels, datasets: [{ label: 'Pendapatan', data: incomeData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+      });
+    }
+  }
+
+  // EXPENSE LINE CHART
+  var expenseDays = {};
+  tx.filter(function(t) { return t.type === "out"; }).forEach(function(t) {
+    var d = t.date;
+    if (!expenseDays[d]) expenseDays[d] = 0;
+    expenseDays[d] += t.amount;
+  });
+  var expenseDates = Object.keys(expenseDays).sort().slice(-maxPoints);
+  var expenseLabels = expenseDates.map(function(d) { return d.slice(5); });
+  var expenseData = expenseDates.map(function(d) { return expenseDays[d]; });
+
+  var expenseCtx = document.getElementById("expenseLineChart");
+  if (expenseCtx) {
+    expenseLineInstance = safeDestroy(expenseLineInstance);
+    if (expenseLabels.length > 0) {
+      expenseLineInstance = new Chart(expenseCtx, {
+        type: 'line',
+        data: { labels: expenseLabels, datasets: [{ label: 'Pengeluaran', data: expenseData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+      });
+    }
+  }
+}
+
+// ================== REPORT ==================
+function updateReport() {
+  var period = document.getElementById("reportPeriod").value;
+  var dateVal = document.getElementById("reportDate").value;
+  var refDate = dateVal ? new Date(dateVal) : new Date();
+  var start, end;
+  if (period === "minggu") {
+    var d = new Date(refDate);
+    var day = d.getDay();
+    start = new Date(d);
+    start.setDate(d.getDate() - day);
+    end = new Date(start);
+    end.setDate(start.getDate() + 6);
+  } else if (period === "bulan") {
+    var d = new Date(refDate);
+    start = new Date(d.getFullYear(), d.getMonth(), 1);
+    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  } else {
+    var d = new Date(refDate);
+    start = new Date(d.getFullYear(), 0, 1);
+    end = new Date(d.getFullYear(), 11, 31);
+  }
+  var startStr = start.toISOString().slice(0, 10);
+  var endStr = end.toISOString().slice(0, 10);
+  var allTx = [];
+  for (var monthKey in state.months) {
+    var monthData = state.months[monthKey];
+    monthData.transactions.forEach(function(t) {
+      if (t.date >= startStr && t.date <= endStr) allTx.push(t);
+    });
+  }
+  var totalIn = allTx.filter(function(t) { return t.type === "in"; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var totalOut = allTx.filter(function(t) { return t.type === "out"; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var diff = totalIn - totalOut;
+  var count = allTx.length;
+  var daysDiff = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+  var avg = count > 0 ? (totalIn + totalOut) / daysDiff : 0;
+  var setText = function(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  setText("repTotalIn", fmtRp(totalIn));
+  setText("repTotalOut", fmtRp(totalOut));
+  setText("repDiff", fmtRp(diff));
+  var diffEl = document.getElementById("repDiff");
+  if (diffEl) diffEl.style.color = diff >= 0 ? 'var(--sage-green)' : 'var(--terracotta)';
+  setText("repAvg", fmtRp(avg));
+  setText("repCount", count);
+
+  // Chart report
+  var daysMap = {};
+  allTx.forEach(function(t) {
+    var d = t.date;
+    if (!daysMap[d]) daysMap[d] = { in: 0, out: 0 };
+    if (t.type === "in") daysMap[d].in += t.amount;
+    else daysMap[d].out += t.amount;
+  });
+  var sorted = Object.keys(daysMap).sort();
+  var maxPoints = 100;
+  var limited = sorted.slice(-maxPoints);
+  var repLabels = limited.map(function(d) { return d.slice(5); });
+  var repIn = limited.map(function(d) { return daysMap[d].in; });
+  var repOut = limited.map(function(d) { return daysMap[d].out; });
+
+  var reportCtx = document.getElementById("reportChart");
+  if (reportCtx) {
+    reportChartInstance = safeDestroy(reportChartInstance);
+    if (repLabels.length > 0) {
+      reportChartInstance = new Chart(reportCtx, {
+        type: 'bar',
+        data: {
+          labels: repLabels,
+          datasets: [
+            { label: 'Pendapatan', data: repIn, backgroundColor: 'rgba(122,158,126,0.6)', borderColor: '#7A9E7E', borderWidth: 1 },
+            { label: 'Pengeluaran', data: repOut, backgroundColor: 'rgba(199,109,78,0.6)', borderColor: '#C76D4E', borderWidth: 1 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 300 } }
+      });
+    }
+  }
+}
+
+// ================== TIPS ==================
+function startTips() {
+  var el = document.getElementById("tipText");
+  if (el) {
+    el.textContent = TIPS[0];
+    setInterval(function() {
+      tipIndex = (tipIndex + 1) % TIPS.length;
+      el.textContent = TIPS[tipIndex];
+    }, 7000);
+  }
+}
+
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ================== NAVIGATION ==================
+function setupNavigation() {
+  var navBtns = document.querySelectorAll(".nav-btn");
+  navBtns.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      navBtns.forEach(function(b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var tab = btn.getAttribute("data-tab");
+      document.querySelectorAll(".tab-content").forEach(function(tc) { tc.classList.remove("active"); });
+      document.getElementById("tab-" + tab).classList.add("active");
+      setTimeout(function() { updateCharts(); }, 100);
+      if (tab === "laporan") updateReport();
+    });
+  });
+}
+
+// ================== MODALS ==================
+function setupModals() {
+  var modalIncome = document.getElementById("modalIncome");
+  var btnAddIncome = document.getElementById("btnAddIncome");
+  var btnIncomeCancel = document.getElementById("modalIncomeCancel");
+  var btnIncomeSave = document.getElementById("modalIncomeSave");
+
+  btnAddIncome.addEventListener("click", function() {
+    document.getElementById("incomeDate").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("incomeAmount").value = "";
+    document.getElementById("incomeNote").value = "";
+    modalIncome.classList.add("open");
+  });
+  btnIncomeCancel.addEventListener("click", function() { modalIncome.classList.remove("open"); });
+  modalIncome.addEventListener("click", function(e) { if (e.target === modalIncome) modalIncome.classList.remove("open"); });
+  btnIncomeSave.addEventListener("click", function() {
+    var date = document.getElementById("incomeDate").value;
+    var amount = parseRibuan(document.getElementById("incomeAmount").value);
+    var note = document.getElementById("incomeNote").value.trim();
+    if (!date || !amount || amount <= 0) { alert("Tanggal dan nominal harus diisi."); return; }
+    var d = getMonthData(state.currentMonth);
+    d.transactions.unshift({ id: uid(), type: "in", category: "uang_jajan", amount: amount, note: note, date: date });
+    saveState();
+    renderAll();
+    modalIncome.classList.remove("open");
+  });
+
+  var modalExpense = document.getElementById("modalExpense");
+  var btnAddExpense = document.getElementById("btnAddExpense");
+  var btnExpenseCancel = document.getElementById("modalExpenseCancel");
+  var btnExpenseSave = document.getElementById("modalExpenseSave");
+
+  btnAddExpense.addEventListener("click", function() {
+    document.getElementById("expenseDate").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("expenseAmount").value = "";
+    document.getElementById("expenseNote").value = "";
+    document.getElementById("expenseCategory").value = "kebutuhan";
+    modalExpense.classList.add("open");
+  });
+  btnExpenseCancel.addEventListener("click", function() { modalExpense.classList.remove("open"); });
+  modalExpense.addEventListener("click", function(e) { if (e.target === modalExpense) modalExpense.classList.remove("open"); });
+  btnExpenseSave.addEventListener("click", function() {
+    var date = document.getElementById("expenseDate").value;
+    var amount = parseRibuan(document.getElementById("expenseAmount").value);
+    var note = document.getElementById("expenseNote").value.trim();
+    var category = document.getElementById("expenseCategory").value;
+    if (!date || !amount || amount <= 0) { alert("Tanggal dan nominal harus diisi."); return; }
+    var d = getMonthData(state.currentMonth);
+    d.transactions.unshift({ id: uid(), type: "out", category: category, amount: amount, note: note, date: date });
+    saveState();
+    renderAll();
+    modalExpense.classList.remove("open");
+  });
+}
+
+// ================== CURRENCY INPUTS ==================
+function attachCurrencyInputs() {
+  var allowanceInput = document.getElementById("allowanceInput");
+  if (allowanceInput) {
+    attachCurrencyInput(allowanceInput, function(value) {
+      getMonthData(state.currentMonth).allowance = value;
+      saveState();
+      renderSummary();
+      renderGauges();
+    });
+  }
+  attachCurrencyInput(document.getElementById("incomeAmount"));
+  attachCurrencyInput(document.getElementById("expenseAmount"));
+}
+
+// ================== POPUPS ==================
+function setupPopups() {
+  var overlay = document.getElementById("popupOverlay");
+  var closeBtn = document.getElementById("popupClose");
+  var shortcutBtn = document.getElementById("popupShortcut");
+  var currentPopupKey = null;
+
+  function openPopup(key) {
+    var data = POPUP_DATA[key];
+    if (!data) return;
+    currentPopupKey = key;
+    document.getElementById("popupTitleText").textContent = data.title;
+    document.getElementById("popupDescription").textContent = data.description;
+    shortcutBtn.textContent = data.shortcutLabel || "Lihat Detail";
+    shortcutBtn.style.display = data.shortcut ? "inline-block" : "none";
+    overlay.classList.add("open");
+    setTimeout(function() { if (typeof lucide !== "undefined") lucide.createIcons(); }, 50);
+  }
+
+  function closePopup() { overlay.classList.remove("open"); currentPopupKey = null; }
+
+  closeBtn.addEventListener("click", closePopup);
+  overlay.addEventListener("click", function(e) { if (e.target === overlay) closePopup(); });
+
+  shortcutBtn.addEventListener("click", function() {
+    var data = POPUP_DATA[currentPopupKey];
+    if (!data || !data.shortcut) return;
+    closePopup();
+    var navBtns = document.querySelectorAll(".nav-btn");
+    navBtns.forEach(function(b) { if (b.getAttribute("data-tab") === data.shortcut) b.click(); });
+  });
+
+  document.querySelectorAll("[data-popup]").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var key = el.getAttribute("data-popup");
+      openPopup(key);
+    });
+  });
+
+  document.getElementById("wealthCard").addEventListener("click", function() {
+    var m = computeMetrics();
+    var data = getMonthData(state.currentMonth);
+    document.getElementById("popupTitleText").textContent = "Total Kekayaan - Rincian";
+    document.getElementById("popupDescription").innerHTML = `
+      <div class="wealth-detail-grid">
+        <div class="wealth-detail-item"><span class="label">Kas Dompet</span><span class="value">${fmtRp(data.kas)}</span></div>
+        <div class="wealth-detail-item"><span class="label">E-Wallet</span><span class="value">${fmtRp(data.ewallet)}</span></div>
+        <div class="wealth-detail-item"><span class="label">Total Tabungan</span><span class="value gold">${fmtRp(m.totalTabungan)}</span></div>
+        <div class="wealth-detail-item"><span class="label">Dana Darurat</span><span class="value green">${fmtRp(m.totalDarurat)}</span></div>
+        <div class="wealth-detail-item"><span class="label">Utang</span><span class="value red">${fmtRp(data.utang)}</span></div>
+        <div class="wealth-detail-item" style="grid-column: span 2; background: rgba(200,155,60,0.08); border-color: var(--muted-gold);"><span class="label" style="font-weight:700;">Total Kekayaan Bersih</span><span class="value" style="font-size:16px;color:var(--muted-gold);">${fmtRp(m.totalWealth)}</span></div>
+      </div>
+      <p style="font-size:13px;color:rgba(44,42,38,0.6);margin-top:4px;">Total kekayaan = Kas + E-Wallet + Tabungan + Dana Darurat - Utang</p>
+    `;
+    shortcutBtn.textContent = "Lihat Rincian Aset";
+    shortcutBtn.style.display = "inline-block";
+    shortcutBtn.onclick = function() {
+      closePopup();
+      document.querySelector(".asset-panel").scrollIntoView({ behavior: "smooth" });
+    };
+    overlay.classList.add("open");
+    setTimeout(function() { if (typeof lucide !== "undefined") lucide.createIcons(); }, 50);
+  });
+}
+
+// ================== EVENTS ==================
+function attachEvents() {
+  document.getElementById("prevMonth").addEventListener("click", function() {
+    state.currentMonth = shiftMonth(state.currentMonth, -1);
+    getMonthData(state.currentMonth);
+    saveState();
+    renderAll();
+  });
+  document.getElementById("nextMonth").addEventListener("click", function() {
+    state.currentMonth = shiftMonth(state.currentMonth, 1);
+    getMonthData(state.currentMonth);
+    saveState();
+    renderAll();
+  });
+  document.getElementById("exportBtn").addEventListener("click", exportToFile);
+  document.getElementById("importBtn").addEventListener("click", function() { document.getElementById("importFileInput").click(); });
+  document.getElementById("importFileInput").addEventListener("change", function(e) {
+    var file = e.target.files[0];
+    if (file) importFromFile(file);
+    e.target.value = "";
+  });
+  document.getElementById("connectFileBtn").addEventListener("click", function() {
+    if (window.showSaveFilePicker) {
+      alert("Browser ini mendukung koneksi langsung ke file. Saat Anda menekan Simpan, Anda bisa memilih lokasi penyimpanan permanen untuk storage.txt.");
+    } else {
+      alert("Browser ini belum mendukung koneksi langsung ke file. Gunakan tombol Simpan untuk mengunduh storage.txt dan tombol Muat untuk membukanya kembali.");
+    }
+  });
+  document.getElementById("reportPeriod").addEventListener("change", updateReport);
+  document.getElementById("reportDate").addEventListener("change", updateReport);
+  document.getElementById("reportDate").value = new Date().toISOString().slice(0, 10);
+}
+
+// ================== INIT ==================
+document.addEventListener("DOMContentLoaded", function() {
+  loadState();
+  setupNavigation();
+  setupModals();
+  attachCurrencyInputs();
+  attachEvents();
+  setupPopups();
+  renderAll();
+  startTips();
+  if (typeof lucide !== "undefined") lucide.createIcons();
+});
