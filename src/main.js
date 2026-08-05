@@ -70,6 +70,7 @@ function parseRibuan(value) {
   return digitsOnly === "" ? 0 : parseInt(digitsOnly, 10);
 }
 function attachCurrencyInput(inputElement, onValueChange) {
+  if (!inputElement) return;
   inputElement.setAttribute("type", "text");
   inputElement.setAttribute("inputmode", "numeric");
   inputElement.addEventListener("input", () => {
@@ -188,7 +189,8 @@ function computeMetrics() {
 // ================== RENDER ==================
 function renderAll() {
   const data = getMonthData(state.currentMonth);
-  document.getElementById("monthLabel").textContent = monthLabel(state.currentMonth);
+  const monthLabelEl = document.getElementById("monthLabel");
+  if (monthLabelEl) monthLabelEl.textContent = monthLabel(state.currentMonth);
   const allowanceInput = document.getElementById("allowanceInput");
   if (allowanceInput) allowanceInput.value = data.allowance ? formatRibuan(data.allowance) : "";
   renderSummary();
@@ -203,10 +205,11 @@ function renderAll() {
 
 function renderSummary() {
   const m = computeMetrics();
-  document.getElementById("totalIn").textContent = fmtRp(m.totalIn);
-  document.getElementById("totalOut").textContent = fmtRp(m.totalOut);
-  document.getElementById("sisaSaldo").textContent = fmtRp(m.sisa);
-  document.getElementById("totalWealth").textContent = fmtRp(m.totalWealth);
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText("totalIn", fmtRp(m.totalIn));
+  setText("totalOut", fmtRp(m.totalOut));
+  setText("sisaSaldo", fmtRp(m.sisa));
+  setText("totalWealth", fmtRp(m.totalWealth));
 }
 
 function statusFor(value, goodMin, warnMin, inverse) {
@@ -222,6 +225,7 @@ function statusFor(value, goodMin, warnMin, inverse) {
 }
 
 function setRing(ringEl, pct, color) {
+  if (!ringEl) return;
   const clamped = Math.max(0, Math.min(100, pct));
   ringEl.style.background = `conic-gradient(${color} ${clamped * 3.6}deg, ${PRIMARY_SOFT} ${clamped * 3.6}deg)`;
 }
@@ -231,49 +235,69 @@ function renderGauges() {
   const data = getMonthData(state.currentMonth);
   const sv = statusFor(m.savingsRatio, 20, 10, false);
   setRing(document.getElementById("ringSavings"), m.savingsScore, sv.color);
-  document.getElementById("savingsValue").textContent = `${Math.round(m.savingsRatio)}%`;
+  const savingsVal = document.getElementById("savingsValue");
+  if (savingsVal) savingsVal.textContent = `${Math.round(m.savingsRatio)}%`;
   const savingsBadge = document.getElementById("savingsBadge");
-  savingsBadge.className = "badge " + sv.badge;
-  savingsBadge.textContent = m.savingsRatio >= 20 ? "Sehat" : m.savingsRatio >= 10 ? "Kurang" : "Rendah";
+  if (savingsBadge) {
+    savingsBadge.className = "badge " + sv.badge;
+    savingsBadge.textContent = m.savingsRatio >= 20 ? "Sehat" : m.savingsRatio >= 10 ? "Kurang" : "Rendah";
+  }
 
   const ls = statusFor(m.lifestyleRatio, 30, 45, true);
   setRing(document.getElementById("ringLifestyle"), m.lifestyleScore, ls.color);
-  document.getElementById("lifestyleValue").textContent = `${Math.round(m.lifestyleRatio)}%`;
+  const lifestyleVal = document.getElementById("lifestyleValue");
+  if (lifestyleVal) lifestyleVal.textContent = `${Math.round(m.lifestyleRatio)}%`;
   const lifestyleBadge = document.getElementById("lifestyleBadge");
-  lifestyleBadge.className = "badge " + ls.badge;
-  lifestyleBadge.textContent = m.lifestyleRatio <= 30 ? "Terkendali" : m.lifestyleRatio <= 45 ? "Waspada" : "Boros";
+  if (lifestyleBadge) {
+    lifestyleBadge.className = "badge " + ls.badge;
+    lifestyleBadge.textContent = m.lifestyleRatio <= 30 ? "Terkendali" : m.lifestyleRatio <= 45 ? "Waspada" : "Boros";
+  }
 
   const isNeg = m.netLiquid < 0;
   const scale = Math.max(m.baseIn * 0.5, 50000);
   const pct = isNeg ? 100 : Math.max(4, Math.min(100, (m.netLiquid / scale) * 100));
   const tankFill = document.getElementById("tankFill");
-  tankFill.style.height = `${pct}%`;
-  tankFill.style.background = isNeg ? `linear-gradient(180deg, rgba(199,109,78,0.75), ${COLORS.coral})` : `linear-gradient(180deg, rgba(122,158,126,0.75), ${COLORS.teal})`;
-  tankFill.style.boxShadow = `0 0 14px ${isNeg ? COLORS.coral : COLORS.teal}`;
-  document.getElementById("liquidValue").textContent = fmtRp(m.netLiquid);
+  if (tankFill) {
+    tankFill.style.height = `${pct}%`;
+    tankFill.style.background = isNeg ? `linear-gradient(180deg, rgba(199,109,78,0.75), ${COLORS.coral})` : `linear-gradient(180deg, rgba(122,158,126,0.75), ${COLORS.teal})`;
+    tankFill.style.boxShadow = `0 0 14px ${isNeg ? COLORS.coral : COLORS.teal}`;
+  }
+  const liquidVal = document.getElementById("liquidValue");
+  if (liquidVal) liquidVal.textContent = fmtRp(m.netLiquid);
   const liquidBadge = document.getElementById("liquidBadge");
-  liquidBadge.className = "badge " + (isNeg ? "danger" : "");
-  liquidBadge.textContent = isNeg ? "Defisit — cek utang" : "Aman & Positif";
+  if (liquidBadge) {
+    liquidBadge.className = "badge " + (isNeg ? "danger" : "");
+    liquidBadge.textContent = isNeg ? "Defisit — cek utang" : "Aman & Positif";
+  }
 
   const em = statusFor(m.emergencyRatio, 100, 50, false);
   setRing(document.getElementById("ringEmergency"), m.emergencyScore, em.color);
-  document.getElementById("emergencyValue").textContent = `${Math.round(Math.min(999, m.emergencyRatio))}%`;
-  document.getElementById("emergencyTargetLabel").textContent = `Target ${fmtRp(data.emergencyTarget)}`;
+  const emergencyVal = document.getElementById("emergencyValue");
+  if (emergencyVal) emergencyVal.textContent = `${Math.round(Math.min(999, m.emergencyRatio))}%`;
+  const emergencyTargetLabel = document.getElementById("emergencyTargetLabel");
+  if (emergencyTargetLabel) emergencyTargetLabel.textContent = `Target ${fmtRp(data.emergencyTarget)}`;
   const emergencyBadge = document.getElementById("emergencyBadge");
-  emergencyBadge.className = "badge " + em.badge;
-  emergencyBadge.textContent = m.emergencyRatio >= 100 ? "Terpenuhi" : m.emergencyRatio >= 50 ? "Menuju" : "Mulai";
+  if (emergencyBadge) {
+    emergencyBadge.className = "badge " + em.badge;
+    emergencyBadge.textContent = m.emergencyRatio >= 100 ? "Terpenuhi" : m.emergencyRatio >= 50 ? "Menuju" : "Mulai";
+  }
 
   const level = Math.min(5, Math.max(1, Math.floor(m.literacyScore / 20) + 1));
   const titles = ["Pemula Boros", "Belajar Hemat", "Cukup Cermat", "Jagoan Hemat", "Master Keuangan"];
   const within = m.literacyScore % 20 === 0 && m.literacyScore > 0 ? 100 : (m.literacyScore % 20) * 5;
-  document.getElementById("levelValue").textContent = `Lv.${level}`;
-  document.getElementById("xpFill").style.width = `${Math.max(4, within)}%`;
-  document.getElementById("literacyTitle").textContent = `${titles[level - 1]} · ${Math.round(m.literacyScore)}/100`;
+  const levelEl = document.getElementById("levelValue");
+  if (levelEl) levelEl.textContent = `Lv.${level}`;
+  const xpFill = document.getElementById("xpFill");
+  if (xpFill) xpFill.style.width = `${Math.max(4, within)}%`;
+  const literacyTitle = document.getElementById("literacyTitle");
+  if (literacyTitle) literacyTitle.textContent = `${titles[level - 1]} · ${Math.round(m.literacyScore)}/100`;
 }
 
+// ================== RENDER INCOME LIST ==================
 function renderIncomeList() {
   const data = getMonthData(state.currentMonth);
   const list = document.getElementById("incomeList");
+  if (!list) return;
   const incomes = data.transactions.filter(t => t.type === "in");
   if (incomes.length === 0) {
     list.innerHTML = `<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pendapatan bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pendapatan.</p></div>`;
@@ -305,9 +329,11 @@ function renderIncomeList() {
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
+// ================== RENDER EXPENSE LIST ==================
 function renderExpenseList() {
   const data = getMonthData(state.currentMonth);
   const list = document.getElementById("expenseList");
+  if (!list) return;
   const expenses = data.transactions.filter(t => t.type === "out");
   if (expenses.length === 0) {
     list.innerHTML = `<div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pengeluaran bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pengeluaran.</p></div>`;
@@ -339,385 +365,311 @@ function renderExpenseList() {
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
+// ================== ASSET PANEL ==================
 function updateAssetPanel() {
   const data = getMonthData(state.currentMonth);
   const m = computeMetrics();
-  document.getElementById("assetKas").textContent = fmtRp(data.kas);
-  document.getElementById("assetEwallet").textContent = fmtRp(data.ewallet);
-  document.getElementById("assetUtang").textContent = fmtRp(data.utang);
-  document.getElementById("assetTabungan").textContent = fmtRp(m.totalTabungan);
-  document.getElementById("assetDarurat").textContent = fmtRp(m.totalDarurat);
-  document.getElementById("assetTargetDarurat").textContent = fmtRp(data.emergencyTarget);
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText("assetKas", fmtRp(data.kas));
+  setText("assetEwallet", fmtRp(data.ewallet));
+  setText("assetUtang", fmtRp(data.utang));
+  setText("assetTabungan", fmtRp(m.totalTabungan));
+  setText("assetDarurat", fmtRp(m.totalDarurat));
+  setText("assetTargetDarurat", fmtRp(data.emergencyTarget));
+}
+
+// ================== CHART UPDATES (DIPERBAIKI) ==================
+function safeDestroy(instance) {
+  if (instance) {
+    try { instance.destroy(); } catch (e) { /* ignore */ }
+    return null;
+  }
+  return null;
 }
 
 function updateCharts() {
   const data = getMonthData(state.currentMonth);
   const tx = data.transactions;
+
+  // --- PIE CHART ---
   const totalIn = tx.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
   const totalOut = tx.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
-
   const pieCtx = document.getElementById("pieChart");
-  if (pieChartInstance) pieChartInstance.destroy();
   if (pieCtx) {
-    pieChartInstance = new Chart(pieCtx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Pendapatan', 'Pengeluaran'],
-        datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#7A9E7E', '#C76D4E'], borderColor: ['#7A9E7E', '#C76D4E'], borderWidth: 1 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, cutout: '65%', animation: { animateRotate: true, duration: 800 } }
-    });
-  }
-
-  const days = {};
-  tx.forEach(t => {
-    const d = t.date;
-    if (!days[d]) days[d] = { in: 0, out: 0 };
-    if (t.type === "in") days[d].in += t.amount;
-    else days[d].out += t.amount;
-  });
-  const sortedDates = Object.keys(days).sort();
-  const labels = sortedDates.map(d => d.slice(5));
-  const inData = sortedDates.map(d => days[d].in);
-  const outData = sortedDates.map(d => days[d].out);
-
-  const lineCtx = document.getElementById("lineChart");
-  if (lineChartInstance) lineChartInstance.destroy();
-  if (lineCtx) {
-    lineChartInstance = new Chart(lineCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          { label: 'Pendapatan', data: inData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3 },
-          { label: 'Pengeluaran', data: outData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3 }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 800 } }
-    });
-  }
-
-  const incomeDays = {};
-  tx.filter(t => t.type === "in").forEach(t => {
-    const d = t.date;
-    if (!incomeDays[d]) incomeDays[d] = 0;
-    incomeDays[d] += t.amount;
-  });
-  const incomeDates = Object.keys(incomeDays).sort();
-  const incomeLabels = incomeDates.map(d => d.slice(5));
-  const incomeData = incomeDates.map(d => incomeDays[d]);
-
-  const incomeCtx = document.getElementById("incomeLineChart");
-  if (incomeLineInstance) incomeLineInstance.destroy();
-  if (incomeCtx) {
-    incomeLineInstance = new Chart(incomeCtx, {
-      type: 'line',
-      data: { labels: incomeLabels, datasets: [{ label: 'Pendapatan', data: incomeData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 800 } }
-    });
-  }
-
-  const expenseDays = {};
-  tx.filter(t => t.type === "out").forEach(t => {
-    const d = t.date;
-    if (!expenseDays[d]) expenseDays[d] = 0;
-    expenseDays[d] += t.amount;
-  });
-  const expenseDates = Object.keys(expenseDays).sort();
-  const expenseLabels = expenseDates.map(d => d.slice(5));
-  const expenseData = expenseDates.map(d => expenseDays[d]);
-
-  const expenseCtx = document.getElementById("expenseLineChart");
-  if (expenseLineInstance) expenseLineInstance.destroy();
-  if (expenseCtx) {
-    expenseLineInstance = new Chart(expenseCtx, {
-      type: 'line',
-      data: { labels: expenseLabels, datasets: [{ label: 'Pengeluaran', data: expenseData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 800 } }
-    });
-  }
+    pieChartInstance = safeDestroy(pieChartInstance);
+    if (totalIn || totalOut) {
+      pieChartInstance = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pendapatan', 'Pengeluaran'],
+          datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#7A9E7E', '#C76D4E'], borderColor: ['#7A9E7E', '#C76D4E'], borderWidth: 1 }]
+        },
+        position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: rgba(44, 42, 38, 0.4);
+  transition: color 0.2s;
+}
+.close-popup:hover {
+  color: #2D2D2D;
+}
+.shortcut-btn {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 40px;
+  background: #264653;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.shortcut-btn:hover {
+  background: #1d3a47;
+  transform: translateY(-2px);
 }
 
-function updateReport() {
-  const period = document.getElementById("reportPeriod").value;
-  const dateVal = document.getElementById("reportDate").value;
-  const refDate = dateVal ? new Date(dateVal) : new Date();
-  let start, end;
-  if (period === "minggu") {
-    const d = new Date(refDate);
-    const day = d.getDay();
-    start = new Date(d); start.setDate(d.getDate() - day);
-    end = new Date(start); end.setDate(start.getDate() + 6);
-  } else if (period === "bulan") {
-    const d = new Date(refDate);
-    start = new Date(d.getFullYear(), d.getMonth(), 1);
-    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  } else {
-    const d = new Date(refDate);
-    start = new Date(d.getFullYear(), 0, 1);
-    end = new Date(d.getFullYear(), 11, 31);
-  }
-  const startStr = start.toISOString().slice(0, 10);
-  const endStr = end.toISOString().slice(0, 10);
-  let allTx = [];
-  for (const monthKey of Object.keys(state.months)) {
-    const monthData = state.months[monthKey];
-    monthData.transactions.forEach(t => {
-      if (t.date >= startStr && t.date <= endStr) allTx.push(t);
-    });
-  }
-  const totalIn = allTx.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
-  const totalOut = allTx.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
-  const diff = totalIn - totalOut;
-  const count = allTx.length;
-  const daysDiff = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-  const avg = count > 0 ? (totalIn + totalOut) / daysDiff : 0;
-  document.getElementById("repTotalIn").textContent = fmtRp(totalIn);
-  document.getElementById("repTotalOut").textContent = fmtRp(totalOut);
-  document.getElementById("repDiff").textContent = fmtRp(diff);
-  document.getElementById("repDiff").style.color = diff >= 0 ? 'var(--sage-green)' : 'var(--terracotta)';
-  document.getElementById("repAvg").textContent = fmtRp(avg);
-  document.getElementById("repCount").textContent = count;
-
-  const daysMap = {};
-  allTx.forEach(t => {
-    const d = t.date;
-    if (!daysMap[d]) daysMap[d] = { in: 0, out: 0 };
-    if (t.type === "in") daysMap[d].in += t.amount;
-    else daysMap[d].out += t.amount;
-  });
-  const sorted = Object.keys(daysMap).sort();
-  const repLabels = sorted.map(d => d.slice(5));
-  const repIn = sorted.map(d => daysMap[d].in);
-  const repOut = sorted.map(d => daysMap[d].out);
-
-  const reportCtx = document.getElementById("reportChart");
-  if (reportChartInstance) reportChartInstance.destroy();
-  if (reportCtx) {
-    reportChartInstance = new Chart(reportCtx, {
-      type: 'bar',
-      data: {
-        labels: repLabels,
-        datasets: [
-          { label: 'Pendapatan', data: repIn, backgroundColor: 'rgba(122,158,126,0.6)', borderColor: '#7A9E7E', borderWidth: 1 },
-          { label: 'Pengeluaran', data: repOut, backgroundColor: 'rgba(199,109,78,0.6)', borderColor: '#C76D4E', borderWidth: 1 }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }, animation: { duration: 800 } }
-    });
-  }
+/* ---------- MODAL ---------- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 42, 38, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open {
+  display: flex;
+}
+.modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 28px 32px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 16px 56px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(44, 42, 38, 0.08);
+  animation: fadeSlide 0.3s ease;
+  position: relative;
+}
+.modal h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #264653;
+  margin-bottom: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.modal h3 i {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #C89B3C;
+}
+.form-group {
+  margin-bottom: 0.875rem;
+}
+.form-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(44, 42, 38, 0.6);
+  margin-bottom: 4px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 10px;
+  border: 1px solid rgba(44, 42, 38, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 0.8125rem;
+  color: #2D2D2D;
+  transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #C89B3C;
+  box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.08);
+}
+.form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 1.125rem;
+  justify-content: flex-end;
+}
+.btn-secondary {
+  padding: 0.625rem 1.25rem;
+  border-radius: 40px;
+  background: #F1EFEA;
+  color: #2D2D2D;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-secondary:hover {
+  background: #d6d2ca;
+}
+.btn-primary {
+  padding: 0.625rem 1.5rem;
+  border-radius: 40px;
+  background: #264653;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(38, 70, 83, 0.15);
+}
+.btn-primary:hover {
+  background: #1d3a47;
+  transform: translateY(-1px);
 }
 
-function startTips() {
-  const el = document.getElementById("tipText");
-  if (el) {
-    el.textContent = TIPS[0];
-    setInterval(() => {
-      tipIndex = (tipIndex + 1) % TIPS.length;
-      el.textContent = TIPS[tipIndex];
-    }, 7000);
-  }
+/* ---------- REPORT ---------- */
+.report-stat {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(44, 42, 38, 0.08);
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  text-align: center;
+}
+.stat-label {
+  font-size: 0.6875rem;
+  color: rgba(44, 42, 38, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #2D2D2D;
+  margin-top: 4px;
+}
+.stat-value.gold {
+  color: #C89B3C;
+}
+.stat-value.green {
+  color: #7A9E7E;
+}
+.stat-value.red {
+  color: #C76D4E;
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+/* ---------- WEALTH DETAIL ---------- */
+.wealth-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  margin: 0.75rem 0;
+}
+.wealth-detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(44, 42, 38, 0.08);
+  font-size: 0.8125rem;
+}
+.wealth-detail-item .label {
+  color: rgba(44, 42, 38, 0.6);
+}
+.wealth-detail-item .value {
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.wealth-detail-item .value.gold {
+  color: #C89B3C;
+}
+.wealth-detail-item .value.green {
+  color: #7A9E7E;
+}
+.wealth-detail-item .value.red {
+  color: #C76D4E;
 }
 
-// ================== NAVIGATION ==================
-function setupNavigation() {
-  const navBtns = document.querySelectorAll(".nav-btn");
-  navBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      navBtns.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      const tab = btn.getAttribute("data-tab");
-      document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
-      document.getElementById(`tab-${tab}`).classList.add("active");
-      setTimeout(() => updateCharts(), 100);
-      if (tab === "laporan") updateReport();
-    });
-  });
+/* ---------- TARGET BOX ---------- */
+.target-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(200, 155, 60, 0.06);
+  border: 1px solid rgba(200, 155, 60, 0.15);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+}
+.target-box label {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #264653;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.target-box label i {
+  width: 1rem;
+  height: 1rem;
+  color: #C89B3C;
+}
+.target-box input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.5rem 0.875rem;
+  border-radius: 10px;
+  border: 1px solid rgba(44, 42, 38, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2D2D2D;
+}
+.target-box input:focus {
+  border-color: #C89B3C;
+  box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.1);
 }
 
-// ================== MODALS ==================
-function setupModals() {
-  const modalIncome = document.getElementById("modalIncome");
-  const btnAddIncome = document.getElementById("btnAddIncome");
-  const btnIncomeCancel = document.getElementById("modalIncomeCancel");
-  const btnIncomeSave = document.getElementById("modalIncomeSave");
-
-  btnAddIncome.addEventListener("click", () => {
-    document.getElementById("incomeDate").value = new Date().toISOString().slice(0, 10);
-    document.getElementById("incomeAmount").value = "";
-    document.getElementById("incomeNote").value = "";
-    modalIncome.classList.add("open");
-  });
-  btnIncomeCancel.addEventListener("click", () => modalIncome.classList.remove("open"));
-  modalIncome.addEventListener("click", (e) => { if (e.target === modalIncome) modalIncome.classList.remove("open"); });
-  btnIncomeSave.addEventListener("click", () => {
-    const date = document.getElementById("incomeDate").value;
-    const amount = parseRibuan(document.getElementById("incomeAmount").value);
-    const note = document.getElementById("incomeNote").value.trim();
-    if (!date || !amount || amount <= 0) { alert("Tanggal dan nominal harus diisi."); return; }
-    const d = getMonthData(state.currentMonth);
-    d.transactions.unshift({ id: uid(), type: "in", category: "uang_jajan", amount, note, date });
-    saveState();
-    renderAll();
-    modalIncome.classList.remove("open");
-  });
-
-  const modalExpense = document.getElementById("modalExpense");
-  const btnAddExpense = document.getElementById("btnAddExpense");
-  const btnExpenseCancel = document.getElementById("modalExpenseCancel");
-  const btnExpenseSave = document.getElementById("modalExpenseSave");
-
-  btnAddExpense.addEventListener("click", () => {
-    document.getElementById("expenseDate").value = new Date().toISOString().slice(0, 10);
-    document.getElementById("expenseAmount").value = "";
-    document.getElementById("expenseNote").value = "";
-    document.getElementById("expenseCategory").value = "kebutuhan";
-    modalExpense.classList.add("open");
-  });
-  btnExpenseCancel.addEventListener("click", () => modalExpense.classList.remove("open"));
-  modalExpense.addEventListener("click", (e) => { if (e.target === modalExpense) modalExpense.classList.remove("open"); });
-  btnExpenseSave.addEventListener("click", () => {
-    const date = document.getElementById("expenseDate").value;
-    const amount = parseRibuan(document.getElementById("expenseAmount").value);
-    const note = document.getElementById("expenseNote").value.trim();
-    const category = document.getElementById("expenseCategory").value;
-    if (!date || !amount || amount <= 0) { alert("Tanggal dan nominal harus diisi."); return; }
-    const d = getMonthData(state.currentMonth);
-    d.transactions.unshift({ id: uid(), type: "out", category, amount, note, date });
-    saveState();
-    renderAll();
-    modalExpense.classList.remove("open");
-  });
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeSlide {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeSlide {
+  animation: fadeSlide 0.3s ease;
 }
 
-// ================== CURRENCY INPUTS ==================
-function attachCurrencyInputs() {
-  const allowanceInput = document.getElementById("allowanceInput");
-  if (allowanceInput) {
-    attachCurrencyInput(allowanceInput, (value) => {
-      getMonthData(state.currentMonth).allowance = value;
-      saveState();
-      renderSummary();
-      renderGauges();
-    });
-  }
-  attachCurrencyInput(document.getElementById("incomeAmount"));
-  attachCurrencyInput(document.getElementById("expenseAmount"));
+/* ---------- SCROLLBAR ---------- */
+::-webkit-scrollbar {
+  width: 5px;
 }
-
-// ================== POPUPS ==================
-function setupPopups() {
-  const overlay = document.getElementById("popupOverlay");
-  const closeBtn = document.getElementById("popupClose");
-  const shortcutBtn = document.getElementById("popupShortcut");
-  let currentPopupKey = null;
-
-  function openPopup(key) {
-    const data = POPUP_DATA[key];
-    if (!data) return;
-    currentPopupKey = key;
-    document.getElementById("popupTitleText").textContent = data.title;
-    document.getElementById("popupDescription").textContent = data.description;
-    shortcutBtn.textContent = data.shortcutLabel || "Lihat Detail";
-    shortcutBtn.style.display = data.shortcut ? "inline-block" : "none";
-    overlay.classList.add("open");
-    setTimeout(() => { if (typeof lucide !== "undefined") lucide.createIcons(); }, 50);
-  }
-
-  function closePopup() { overlay.classList.remove("open"); currentPopupKey = null; }
-
-  closeBtn.addEventListener("click", closePopup);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closePopup(); });
-
-  shortcutBtn.addEventListener("click", () => {
-    const data = POPUP_DATA[currentPopupKey];
-    if (!data || !data.shortcut) return;
-    closePopup();
-    const navBtns = document.querySelectorAll(".nav-btn");
-    navBtns.forEach(b => { if (b.getAttribute("data-tab") === data.shortcut) b.click(); });
-  });
-
-  document.querySelectorAll("[data-popup]").forEach(el => {
-    el.addEventListener("click", () => {
-      const key = el.getAttribute("data-popup");
-      openPopup(key);
-    });
-  });
-
-  document.getElementById("wealthCard").addEventListener("click", () => {
-    const m = computeMetrics();
-    const data = getMonthData(state.currentMonth);
-    document.getElementById("popupTitleText").textContent = "Total Kekayaan - Rincian";
-    document.getElementById("popupDescription").innerHTML = `
-      <div class="wealth-detail-grid">
-        <div class="wealth-detail-item"><span class="label">Kas Dompet</span><span class="value">${fmtRp(data.kas)}</span></div>
-        <div class="wealth-detail-item"><span class="label">E-Wallet</span><span class="value">${fmtRp(data.ewallet)}</span></div>
-        <div class="wealth-detail-item"><span class="label">Total Tabungan</span><span class="value gold">${fmtRp(m.totalTabungan)}</span></div>
-        <div class="wealth-detail-item"><span class="label">Dana Darurat</span><span class="value green">${fmtRp(m.totalDarurat)}</span></div>
-        <div class="wealth-detail-item"><span class="label">Utang</span><span class="value red">${fmtRp(data.utang)}</span></div>
-        <div class="wealth-detail-item" style="grid-column: span 2; background: rgba(200,155,60,0.08); border-color: var(--muted-gold);"><span class="label" style="font-weight:700;">Total Kekayaan Bersih</span><span class="value" style="font-size:16px;color:var(--muted-gold);">${fmtRp(m.totalWealth)}</span></div>
-      </div>
-      <p style="font-size:13px;color:rgba(44,42,38,0.6);margin-top:4px;">Total kekayaan = Kas + E-Wallet + Tabungan + Dana Darurat - Utang</p>
-    `;
-    shortcutBtn.textContent = "Lihat Rincian Aset";
-    shortcutBtn.style.display = "inline-block";
-    shortcutBtn.onclick = () => {
-      closePopup();
-      document.querySelector(".asset-panel").scrollIntoView({ behavior: "smooth" });
-    };
-    overlay.classList.add("open");
-    setTimeout(() => { if (typeof lucide !== "undefined") lucide.createIcons(); }, 50);
-  });
+::-webkit-scrollbar-track {
+  background: #F1EFEA;
+  border-radius: 10px;
 }
-
-// ================== EVENTS ==================
-function attachEvents() {
-  document.getElementById("prevMonth").addEventListener("click", () => {
-    state.currentMonth = shiftMonth(state.currentMonth, -1);
-    getMonthData(state.currentMonth);
-    saveState();
-    renderAll();
-  });
-  document.getElementById("nextMonth").addEventListener("click", () => {
-    state.currentMonth = shiftMonth(state.currentMonth, 1);
-    getMonthData(state.currentMonth);
-    saveState();
-    renderAll();
-  });
-  document.getElementById("exportBtn").addEventListener("click", exportToFile);
-  document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFileInput").click());
-  document.getElementById("importFileInput").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) importFromFile(file);
-    e.target.value = "";
-  });
-  document.getElementById("connectFileBtn").addEventListener("click", () => {
-    if (window.showSaveFilePicker) {
-      alert("Browser ini mendukung koneksi langsung ke file. Saat Anda menekan Simpan, Anda bisa memilih lokasi penyimpanan permanen untuk storage.txt.");
-    } else {
-      alert("Browser ini belum mendukung koneksi langsung ke file. Gunakan tombol Simpan untuk mengunduh storage.txt dan tombol Muat untuk membukanya kembali.");
+::-webkit-scrollbar-thumb {
+  background: #C89B3C;
+  border-radius: 10px;
     }
-  });
-  document.getElementById("reportPeriod").addEventListener("change", updateReport);
-  document.getElementById("reportDate").addEventListener("change", updateReport);
-  document.getElementById("reportDate").value = new Date().toISOString().slice(0, 10);
-}
-
-// ================== INIT ==================
-document.addEventListener("DOMContentLoaded", () => {
-  loadState();
-  setupNavigation();
-  setupModals();
-  attachCurrencyInputs();
-  attachEvents();
-  setupPopups();
-  renderAll();
-  startTips();
-  if (typeof lucide !== "undefined") lucide.createIcons();
-});
