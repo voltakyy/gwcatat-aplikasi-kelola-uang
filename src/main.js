@@ -1,5 +1,11 @@
+// ============================================================
+// src/main.js — Dashboard Logic (tanpa import Chart)
+// ============================================================
+
 import { supabase } from './supabase.js'
-import Chart from 'chart.js/auto'
+
+// Chart.js sudah tersedia global dari CDN, tidak perlu import
+// const Chart = window.Chart // opsional
 
 // ===== STATE =====
 let currentMonth = currentMonthKey()
