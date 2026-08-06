@@ -3,204 +3,222 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>gwcatat</title>
-  <!-- Fonts -->
+  <title>gwcatat — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
 
-<div id="app" class="max-w-7xl mx-auto px-4 py-6 relative">
+<div id="app" class="min-h-screen bg-warm-ivory text-charcoal font-body">
 
-  <!-- Tombol toggle sidebar -->
-  <button id="sidebarToggle" class="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md border border-beige hover:bg-gray-100 transition-colors">
-    <i data-lucide="menu" class="w-6 h-6 text-deep-forest"></i>
-  </button>
-
-  <!-- Sidebar -->
-  <nav id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white border-r border-beige shadow-lg z-40 transform -translate-x-full transition-transform duration-200 ease-in-out overflow-y-auto">
+  <!-- ===== SIDEBAR ===== -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-beige shadow-lg transform -translate-x-full transition-transform duration-200 ease-in-out overflow-y-auto">
     <div class="p-4 border-b border-beige flex items-center gap-3">
       <div class="w-8 h-8 rounded-lg bg-deep-forest flex items-center justify-center">
         <svg viewBox="0 0 40 40" class="w-5 h-5 stroke-muted-gold fill-none stroke-[2.4]"><circle cx="20" cy="20" r="17" /><path d="M13 28 L13 13 L20 22 L27 13 L27 28" /><path d="M20 22 L20 28" /></svg>
       </div>
       <span class="font-display font-bold text-lg text-deep-forest">gwcatat</span>
     </div>
-    <div class="p-3 space-y-1">
-      <button data-tab="beranda" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors active">
-        <i data-lucide="home" class="w-5 h-5"></i> Beranda
-      </button>
-      <button data-tab="pendapatan" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors">
-        <i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Pendapatan
-      </button>
-      <button data-tab="pengeluaran" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors">
-        <i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Pengeluaran
-      </button>
-      <button data-tab="laporan" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors">
-        <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Laporan
-      </button>
-    </div>
-  </nav>
+    <nav class="p-3 space-y-1">
+      <button data-tab="beranda" class="nav-btn active"><i data-lucide="home" class="w-5 h-5"></i> Beranda</button>
+      <button data-tab="pendapatan" class="nav-btn"><i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Pendapatan</button>
+      <button data-tab="pengeluaran" class="nav-btn"><i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Pengeluaran</button>
+      <button data-tab="laporan" class="nav-btn"><i data-lucide="bar-chart-2" class="w-5 h-5"></i> Laporan</button>
+    </nav>
+  </aside>
 
-  <!-- Overlay untuk nutup sidebar -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/20 z-30 hidden"></div>
+  <!-- Overlay sidebar -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/20 z-40 hidden"></div>
 
-  <!-- Konten utama -->
+  <!-- ===== MAIN CONTENT ===== -->
   <div class="ml-0 transition-all duration-200">
 
-    <!-- Header -->
-    <header class="flex flex-wrap items-center justify-between gap-3 bg-white border border-beige rounded-2xl px-4 sm:px-6 py-3 shadow-sm mb-5">
+    <!-- HEADER -->
+    <header class="sticky top-0 z-30 bg-white/95 border-b border-beige px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-deep-forest flex items-center justify-center shadow-sm">
-          <svg viewBox="0 0 40 40" class="w-5 h-5 stroke-muted-gold fill-none stroke-[2.4]"><circle cx="20" cy="20" r="17" /><path d="M13 28 L13 13 L20 22 L27 13 L27 28" /><path d="M20 22 L20 28" /></svg>
+        <button id="sidebarToggle" class="p-1 rounded-md hover:bg-gray-100 transition-colors">
+          <i data-lucide="menu" class="w-6 h-6 text-deep-forest"></i>
+        </button>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-deep-forest flex items-center justify-center">
+            <svg viewBox="0 0 40 40" class="w-5 h-5 stroke-muted-gold fill-none stroke-[2.4]"><circle cx="20" cy="20" r="17" /><path d="M13 28 L13 13 L20 22 L27 13 L27 28" /><path d="M20 22 L20 28" /></svg>
+          </div>
+          <h1 class="font-display font-bold text-lg text-deep-forest hidden sm:block">gwcatat</h1>
         </div>
-        <div>
-          <h1 class="font-display font-bold text-lg text-deep-forest">gwcatat</h1>
-          <p class="text-xs text-charcoal/60">Semua uang punya cerita.</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-1 bg-warm-ivory border border-beige rounded-full pl-3 pr-1 py-1">
+        <!-- Month navigator -->
+        <div class="flex items-center gap-1 bg-warm-ivory border border-beige rounded-full pl-3 pr-1 py-1 ml-2">
           <button id="prevMonth" class="p-1 rounded-full hover:bg-black/5"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-          <span id="monthLabel" class="font-display font-semibold text-sm text-deep-forest min-w-[100px] text-center">Juli 2026</span>
+          <span id="monthLabel" class="font-display font-semibold text-sm text-deep-forest min-w-[100px] text-center">Jan 2025</span>
           <button id="nextMonth" class="p-1 rounded-full hover:bg-black/5"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
         </div>
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <span id="storageStatus" class="text-[11px] text-charcoal/50 px-2 py-1 bg-warm-ivory border border-beige rounded-full">Siap</span>
-          <button id="exportBtn" class="text-xs font-semibold px-3 py-1 rounded-full bg-deep-forest text-white shadow-sm hover:bg-deep-forest/90">Simpan</button>
-          <button id="importBtn" class="text-xs font-semibold px-3 py-1 border border-beige rounded-full bg-white hover:bg-gray-50">Muat</button>
-          <input type="file" id="importFileInput" accept=".txt" hidden />
+      </div>
+
+      <!-- Profile dropdown -->
+      <div class="relative">
+        <button id="profileBtn" class="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors">
+          <div class="w-8 h-8 rounded-full bg-deep-forest text-white flex items-center justify-center font-bold text-sm">
+            <span id="userInitial">U</span>
+          </div>
+          <span id="userName" class="text-sm font-medium hidden sm:inline">User</span>
+        </button>
+        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-beige rounded-lg shadow-lg py-1 hidden z-50">
+          <a href="#" id="profileLoginBtn" class="block px-4 py-2 text-sm hover:bg-gray-100">Login</a>
+          <a href="#" id="profileLogoutBtn" class="block px-4 py-2 text-sm hover:bg-gray-100 text-red-600">Logout</a>
         </div>
       </div>
     </header>
 
-    <!-- Tab: Beranda -->
-    <div id="tab-beranda" class="tab-content active space-y-5">
-      <!-- Ringkasan -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 shadow-sm">
-          <div class="text-xs text-charcoal/50">Pemasukan</div>
-          <div id="totalIn" class="font-mono font-bold text-lg">Rp0</div>
-        </div>
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 shadow-sm">
-          <div class="text-xs text-charcoal/50">Pengeluaran</div>
-          <div id="totalOut" class="font-mono font-bold text-lg">Rp0</div>
-        </div>
-        <div class="bg-gradient-to-br from-muted-gold to-[#b8892e] text-white border border-muted-gold rounded-2xl px-4 py-3 shadow-sm">
-          <div class="text-xs text-white/70">Sisa di Tangan</div>
-          <div id="sisaSaldo" class="font-mono font-bold text-lg">Rp0</div>
-        </div>
-        <div class="bg-deep-forest text-white border border-deep-forest rounded-2xl px-4 py-3 shadow-sm">
-          <div class="text-xs text-white/60">Total Kekayaan</div>
-          <div id="totalWealth" class="font-mono font-bold text-lg">Rp0</div>
-        </div>
-      </div>
+    <!-- TAB CONTENT -->
+    <div class="p-4 sm:p-6 space-y-6">
 
-      <!-- Grafik -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- TAB: BERANDA -->
+      <div id="tab-beranda" class="tab-content active space-y-6">
+
+        <!-- Ringkasan -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 shadow-sm">
+            <div class="text-xs text-charcoal/50">Pemasukan</div>
+            <div id="totalIn" class="font-mono font-bold text-lg">Rp0</div>
+          </div>
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 shadow-sm">
+            <div class="text-xs text-charcoal/50">Pengeluaran</div>
+            <div id="totalOut" class="font-mono font-bold text-lg">Rp0</div>
+          </div>
+          <div class="bg-gradient-to-br from-muted-gold to-[#b8892e] text-white border border-muted-gold rounded-2xl px-4 py-3 shadow-sm">
+            <div class="text-xs text-white/70">Sisa di Tangan</div>
+            <div id="sisaSaldo" class="font-mono font-bold text-lg">Rp0</div>
+          </div>
+          <div class="bg-deep-forest text-white border border-deep-forest rounded-2xl px-4 py-3 shadow-sm">
+            <div class="text-xs text-white/60">Total Kekayaan</div>
+            <div id="totalWealth" class="font-mono font-bold text-lg">Rp0</div>
+          </div>
+        </div>
+
+        <!-- Grafik -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+            <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="pie-chart" class="w-4 h-4 text-muted-gold"></i> Perbandingan</h4>
+            <div class="relative w-full h-56"><canvas id="pieChart"></canvas></div>
+          </div>
+          <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+            <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="trending-up" class="w-4 h-4 text-muted-gold"></i> Tren Harian</h4>
+            <div class="relative w-full h-56"><canvas id="lineChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Indikator Kesehatan -->
         <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
-          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="pie-chart" class="w-4 h-4 text-muted-gold"></i> Perbandingan</h4>
-          <div class="relative w-full h-56"><canvas id="pieChart"></canvas></div>
+          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="activity" class="w-4 h-4 text-muted-gold"></i> Indikator Kesehatan</h4>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div class="text-center">
+              <div class="ring w-16 h-16 mx-auto" id="ringSavings"><div class="ring-inner"><span id="savingsValue">0%</span></div></div>
+              <p class="text-xs font-semibold mt-1">Tabungan</p>
+              <span class="badge" id="savingsBadge">-</span>
+            </div>
+            <div class="text-center">
+              <div class="ring w-16 h-16 mx-auto" id="ringLifestyle"><div class="ring-inner"><span id="lifestyleValue">0%</span></div></div>
+              <p class="text-xs font-semibold mt-1">Gaya Hidup</p>
+              <span class="badge" id="lifestyleBadge">-</span>
+            </div>
+            <div class="text-center">
+              <div class="tank w-12 h-16 mx-auto"><div class="tank-fill" id="tankFill"></div></div>
+              <p class="text-xs font-semibold mt-1">Likuiditas</p>
+              <span class="badge" id="liquidBadge">-</span>
+            </div>
+            <div class="text-center">
+              <div class="ring w-16 h-16 mx-auto" id="ringEmergency"><div class="ring-inner"><span id="emergencyValue">0%</span></div></div>
+              <p class="text-xs font-semibold mt-1">Dana Darurat</p>
+              <span class="badge" id="emergencyBadge">-</span>
+            </div>
+            <div class="text-center">
+              <div class="level-badge w-16 h-16 mx-auto flex flex-col items-center justify-center bg-deep-forest text-white rounded-lg">
+                <span id="levelValue" class="font-bold text-sm">Lv.1</span>
+                <div class="xp-bar w-10 h-1 bg-white/20 rounded-full"><div class="xp-fill h-full bg-muted-gold" id="xpFill" style="width:0%"></div></div>
+              </div>
+              <p class="text-xs font-semibold mt-1">Literasi</p>
+              <span class="text-[10px] text-charcoal/50" id="literacyTitle">-</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Kalender -->
         <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
-          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="trending-up" class="w-4 h-4 text-muted-gold"></i> Tren Harian</h4>
-          <div class="relative w-full h-56"><canvas id="lineChart"></canvas></div>
+          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="calendar" class="w-4 h-4 text-muted-gold"></i> Kalender</h4>
+          <div id="calendarContainer" class="grid grid-cols-7 gap-1 text-center"></div>
+          <div class="mt-3 text-xs text-charcoal/50 text-center" id="calendarSummary">Pilih tanggal untuk melihat detail</div>
+        </div>
+
+        <!-- Form Transaksi -->
+        <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="plus-circle" class="w-4 h-4 text-muted-gold"></i> Tambah Transaksi</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <input type="date" id="txDate" class="border border-beige rounded-lg px-3 py-2 text-sm" />
+            <input type="text" id="txDesc" placeholder="Deskripsi" class="border border-beige rounded-lg px-3 py-2 text-sm" />
+            <input type="text" inputmode="numeric" id="txAmount" placeholder="Nominal" class="border border-beige rounded-lg px-3 py-2 text-sm font-mono" />
+            <div class="flex gap-2">
+              <button id="btnAddIncome" class="flex-1 bg-sage-green text-white rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80 transition-opacity">+ Pemasukan</button>
+              <button id="btnAddExpense" class="flex-1 bg-terracotta text-white rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80 transition-opacity">- Pengeluaran</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Kalender -->
-      <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
-        <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="calendar" class="w-4 h-4 text-muted-gold"></i> Kalender</h4>
-        <div id="calendarContainer" class="grid grid-cols-7 gap-1 text-center"></div>
-        <div class="mt-3 text-xs text-charcoal/50 text-center" id="calendarSummary">Pilih tanggal untuk melihat detail</div>
-      </div>
-    </div>
-
-    <!-- Tab: Pendapatan -->
-    <div id="tab-pendapatan" class="tab-content space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- TAB: PENDAPATAN -->
+      <div id="tab-pendapatan" class="tab-content space-y-4">
         <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-up-circle" class="w-5 h-5 text-muted-gold"></i> Pendapatan</h2>
-        <button id="btnAddIncome" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pendapatan</button>
+        <div class="bg-white/50 border border-beige rounded-xl p-3">
+          <div class="relative w-full h-40"><canvas id="incomeLineChart"></canvas></div>
+        </div>
+        <div id="incomeList" class="tx-list space-y-2"></div>
       </div>
-      <div class="bg-white/50 border border-beige rounded-xl p-3">
-        <div class="relative w-full h-40"><canvas id="incomeLineChart"></canvas></div>
-      </div>
-      <div id="incomeList" class="tx-list space-y-2"></div>
-    </div>
 
-    <!-- Tab: Pengeluaran -->
-    <div id="tab-pengeluaran" class="tab-content space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- TAB: PENGELUARAN -->
+      <div id="tab-pengeluaran" class="tab-content space-y-4">
         <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-down-circle" class="w-5 h-5 text-muted-gold"></i> Pengeluaran</h2>
-        <button id="btnAddExpense" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pengeluaran</button>
+        <div class="target-box flex flex-wrap items-center gap-3 bg-muted-gold/5 border border-muted-gold/15 rounded-xl px-4 py-3">
+          <label class="font-semibold text-sm text-deep-forest flex items-center gap-1.5"><i data-lucide="target" class="w-4 h-4 text-muted-gold"></i> Target Uang Jajan</label>
+          <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" class="flex-1 min-w-[100px] px-3 py-1 border border-beige rounded-lg bg-white/60 font-mono font-bold text-sm" />
+          <span class="text-xs text-charcoal/40">(panduan)</span>
+        </div>
+        <div class="bg-white/50 border border-beige rounded-xl p-3">
+          <div class="relative w-full h-40"><canvas id="expenseLineChart"></canvas></div>
+        </div>
+        <div id="expenseList" class="tx-list space-y-2"></div>
       </div>
-      <div class="target-box flex flex-wrap items-center gap-3 bg-muted-gold/5 border border-muted-gold/15 rounded-xl px-4 py-3">
-        <label class="font-semibold text-sm text-deep-forest flex items-center gap-1.5"><i data-lucide="target" class="w-4 h-4 text-muted-gold"></i> Target Uang Jajan</label>
-        <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" class="flex-1 min-w-[100px] px-3 py-1 border border-beige rounded-lg bg-white/60 font-mono font-bold text-sm" />
-        <span class="text-xs text-charcoal/40">(panduan)</span>
+
+      <!-- TAB: LAPORAN -->
+      <div id="tab-laporan" class="tab-content space-y-4">
+        <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-5 h-5 text-muted-gold"></i> Laporan Keuangan</h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="text-sm font-semibold text-deep-forest">Periode</label>
+          <select id="reportPeriod" class="px-3 py-1.5 border border-beige rounded-lg bg-white text-sm">
+            <option value="minggu">Mingguan</option>
+            <option value="bulan" selected>Bulanan</option>
+            <option value="tahun">Tahunan</option>
+          </select>
+          <label class="text-sm font-semibold text-deep-forest">Tanggal</label>
+          <input type="date" id="reportDate" class="px-3 py-1.5 border border-beige rounded-lg bg-white text-sm" />
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Total Pendapatan</div><div id="repTotalIn" class="font-mono font-bold text-lg text-muted-gold">Rp0</div></div>
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Total Pengeluaran</div><div id="repTotalOut" class="font-mono font-bold text-lg text-terracotta">Rp0</div></div>
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Selisih</div><div id="repDiff" class="font-mono font-bold text-lg">Rp0</div></div>
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Rata-rata Harian</div><div id="repAvg" class="font-mono font-bold text-lg">Rp0</div></div>
+          <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Transaksi</div><div id="repCount" class="font-mono font-bold text-lg">0</div></div>
+        </div>
+        <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+          <div class="relative w-full h-64"><canvas id="reportChart"></canvas></div>
+        </div>
       </div>
-      <div class="bg-white/50 border border-beige rounded-xl p-3">
-        <div class="relative w-full h-40"><canvas id="expenseLineChart"></canvas></div>
-      </div>
-      <div id="expenseList" class="tx-list space-y-2"></div>
+
     </div>
-
-    <!-- Tab: Laporan -->
-    <div id="tab-laporan" class="tab-content space-y-4">
-      <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-5 h-5 text-muted-gold"></i> Laporan Keuangan</h2>
-      <div class="flex flex-wrap items-center gap-3">
-        <label class="text-sm font-semibold text-deep-forest">Periode</label>
-        <select id="reportPeriod" class="px-3 py-1.5 border border-beige rounded-lg bg-white text-sm">
-          <option value="minggu">Mingguan</option>
-          <option value="bulan" selected>Bulanan</option>
-          <option value="tahun">Tahunan</option>
-        </select>
-        <label class="text-sm font-semibold text-deep-forest">Tanggal</label>
-        <input type="date" id="reportDate" class="px-3 py-1.5 border border-beige rounded-lg bg-white text-sm" />
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Total Pendapatan</div><div id="repTotalIn" class="font-mono font-bold text-lg text-muted-gold">Rp0</div></div>
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Total Pengeluaran</div><div id="repTotalOut" class="font-mono font-bold text-lg text-terracotta">Rp0</div></div>
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Selisih</div><div id="repDiff" class="font-mono font-bold text-lg">Rp0</div></div>
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Rata-rata Harian</div><div id="repAvg" class="font-mono font-bold text-lg">Rp0</div></div>
-        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Transaksi</div><div id="repCount" class="font-mono font-bold text-lg">0</div></div>
-      </div>
-      <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
-        <div class="relative w-full h-64"><canvas id="reportChart"></canvas></div>
-      </div>
-    </div>
-
-  </div><!-- end content -->
-</div><!-- end app -->
-
-<!-- Modal Pendapatan -->
-<div id="modalIncome" class="modal-overlay">
-  <div class="modal">
-    <h3><i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Tambah Pendapatan</h3>
-    <div class="form-group"><label>Tanggal</label><input type="date" id="incomeDate" /></div>
-    <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="incomeAmount" placeholder="0" /></div>
-    <div class="form-group"><label>Catatan</label><input type="text" id="incomeNote" placeholder="Misal: gaji" /></div>
-    <div class="modal-actions"><button id="modalIncomeCancel" class="btn-secondary">Batal</button><button id="modalIncomeSave" class="btn-primary">Simpan</button></div>
   </div>
 </div>
 
-<!-- Modal Pengeluaran -->
-<div id="modalExpense" class="modal-overlay">
-  <div class="modal">
-    <h3><i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Tambah Pengeluaran</h3>
-    <div class="form-group"><label>Tanggal</label><input type="date" id="expenseDate" /></div>
-    <div class="form-group"><label>Kategori</label><select id="expenseCategory"><option value="kebutuhan">Kebutuhan</option><option value="keinginan">Keinginan</option><option value="tabungan">Tabungan</option><option value="darurat">Dana Darurat</option></select></div>
-    <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="expenseAmount" placeholder="0" /></div>
-    <div class="form-group"><label>Catatan</label><input type="text" id="expenseNote" placeholder="Misal: makan siang" /></div>
-    <div class="modal-actions"><button id="modalExpenseCancel" class="btn-secondary">Batal</button><button id="modalExpenseSave" class="btn-primary">Simpan</button></div>
-  </div>
-</div>
-
-<!-- Popup Deskripsi -->
+<!-- ===== POPUP ===== -->
 <div id="popupOverlay" class="popup-overlay">
   <div class="popup">
     <button id="popupClose" class="close-popup">&times;</button>
@@ -212,4 +230,4 @@
 
 <script type="module" src="/src/main.js"></script>
 </body>
-  </html>
+</html>
