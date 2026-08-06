@@ -3,6 +3,7 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./login.html"
   ],
   theme: {
     extend: {
@@ -25,11 +26,6 @@ export default {
         'card': '24px',
         'sm': '14px',
         'xs': '10px',
-      },
-      boxShadow: {
-        'sm': '0 4px 20px rgba(0, 0, 0, 0.04)',
-        'md': '0 8px 36px rgba(0, 0, 0, 0.06)',
-        'lg': '0 16px 56px rgba(0, 0, 0, 0.08)',
       },
     },
   },
