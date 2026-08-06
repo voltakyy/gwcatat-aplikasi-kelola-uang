@@ -1,8 +1,4 @@
-// src/main.js
-
-import { supabase } from './supabase.js'
-
-// Chart.js sudah tersedia global dari CDN
+/ Chart.js sudah tersedia global dari CDN
 const Chart = window.Chart
 
 // ============================================================
