@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gwcatat — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #FAF8F4; }
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .ring {
+      width: 72px; height: 72px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: conic-gradient(#7A9E7E 0deg, #F1EFEA 0deg);
+    }
+    .ring-inner {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: white; border: 1px solid rgba(44,42,38,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    }
+    .tank {
+      width: 40px; height: 64px; border-radius: 8px;
+      background: rgba(38,70,83,0.06); border: 1px solid rgba(122,158,126,0.25);
+      overflow: hidden; position: relative;
+    }
+    .tank-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(180deg, rgba(122,158,126,0.7), #7A9E7E);
+      transition: height 0.7s ease;
+    }
+    .badge {
+      font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 50px;
+      background: rgba(122,158,126,0.15); color: #7A9E7E;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .badge.warn { background: rgba(200,155,60,0.15); color: #C89B3C; }
+    .badge.danger { background: rgba(199,109,78,0.15); color: #C76D4E; }
+    .nav-btn { transition: all 0.2s; }
+    .nav-btn.active { background: #264653; color: white; }
+    .nav-btn.active i { color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tx-item { transition: background 0.2s; }
+    .tx-item:hover { background: rgba(255,255,255,0.8); }
+    .calendar-day { cursor: pointer; border-radius: 4px; padding: 4px; border: 1px solid transparent; }
+    .calendar-day:hover { background: #f3f0eb; }
+    .calendar-day.has-tx { border-color: rgba(200,155,60,0.3); background: rgba(200,155,60,0.05); }
+    .calendar-day .day-num { font-weight: 500; font-size: 14px; }
+    .calendar-day .day-sum { font-size: 8px; color: rgba(44,42,38,0.5); }
+    .calendar-day .day-sum .in { color: #7A9E7E; }
+    .calendar-day .day-sum .out { color: #C76D4E; }
+  </style>
+</head>
+<body>
+
+<div id="app" class="max-w-7xl mx-auto px-4 py-6">
+
+  <!-- Header -->
+  <header class="flex flex-wrap items-center justify-between gap-3 bg-white/80 border border-[#2D2D2D]/10 rounded-2xl px-4 sm:px-6 py-3 shadow-sm mb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#264653] flex items-center justify-center shadow-md">
+        <svg viewBox="0 0 40 40" class="w-6 h-6 stroke-[#C89B3C] fill-none stroke-[2.4]">
+          <circle cx="20" cy="20" r="17" />
+          <path d="M13 28 L13 13 L20 22 L27 13 L27 28" />
+          <path d="M20 22 L20 28" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-display font-bold text-xl text-[#264653]">gwcatat</h1>
+        <p class="text-xs text-[#2D2D2D]/60">Semua uang punya cerita.</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-1 bg-[#FAF8F4] border border-[#2D2D2D]/10 rounded-full pl-3 pr-1 py-1">
+        <button id="prevMonth" class="p-1 rounded-full hover:bg-black/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg></button>
+        <span id="monthLabel" class="font-display font-semibold text-sm text-[#264653] min-w-[100px] text-center">Jan 2025</span>
+        <button id="nextMonth" class="p-1 rounded-full hover:bg-black/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button>
+      </div>
+      <button id="logoutBtn" class="text-xs font-semibold px-3 py-1.5 border border-[#2D2D2D]/10 rounded-full bg-white hover:bg-gray-50">Keluar</button>
+    </div>
+  </header>
+
+  <!-- Navigasi Tab -->
+  <nav class="flex gap-1 bg-white/80 border border-[#2D2D2D]/10 rounded-2xl p-1 mb-6 overflow-x-auto">
+    <button data-tab="beranda" class="nav-btn active flex-1 py-2 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+      Beranda
+    </button>
+    <button data-tab="pendapatan" class="nav-btn flex-1 py-2 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+      Pendapatan
+    </button>
+    <button data-tab="pengeluaran" class="nav-btn flex-1 py-2 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+      Pengeluaran
+    </button>
+    <button data-tab="laporan" class="nav-btn flex-1 py-2 px-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+      Laporan
+    </button>
+  </nav>
+
+  <!-- ===== TAB: BERANDA ===== -->
+  <div id="tab-beranda" class="tab-content active space-y-6">
+
+    <!-- Ringkasan -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Pemasukan</div>
+        <div id="totalIn" class="font-mono font-bold text-lg">Rp0</div>
+      </div>
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Pengeluaran</div>
+        <div id="totalOut" class="font-mono font-bold text-lg">Rp0</div>
+      </div>
+      <div class="bg-gradient-to-br from-[#C89B3C] to-[#b8892e] text-white rounded-2xl px-4 py-3 shadow-sm">
+        <div class="text-xs text-white/70">Sisa di Tangan</div>
+        <div id="sisaSaldo" class="font-mono font-bold text-lg">Rp0</div>
+      </div>
+      <div class="bg-[#264653] text-white rounded-2xl px-4 py-3 shadow-sm">
+        <div class="text-xs text-white/60">Total Kekayaan</div>
+        <div id="totalWealth" class="font-mono font-bold text-lg">Rp0</div>
+      </div>
+    </div>
+
+    <!-- Grafik -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl p-4 shadow-sm">
+        <h4 class="font-display font-semibold text-sm text-[#264653] flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 text-[#C89B3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+          Perbandingan
+        </h4>
+        <div class="relative w-full h-56"><canvas id="pieChart"></canvas></div>
+      </div>
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl p-4 shadow-sm">
+        <h4 class="font-display font-semibold text-sm text-[#264653] flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 text-[#C89B3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+          Tren Harian
+        </h4>
+        <div class="relative w-full h-56"><canvas id="lineChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Indikator Kesehatan -->
+    <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl p-4 shadow-sm">
+      <h4 class="font-display font-semibold text-sm text-[#264653] flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-[#C89B3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        Indikator Kesehatan
+      </h4>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div class="text-center">
+          <div class="ring mx-auto" id="ringSavings"><div class="ring-inner" id="savingsValue">0%</div></div>
+          <p class="text-xs font-semibold mt-1">Tabungan</p>
+          <span class="badge" id="savingsBadge">-</span>
+        </div>
+        <div class="text-center">
+          <div class="ring mx-auto" id="ringLifestyle"><div class="ring-inner" id="lifestyleValue">0%</div></div>
+          <p class="text-xs font-semibold mt-1">Gaya Hidup</p>
+          <span class="badge" id="lifestyleBadge">-</span>
+        </div>
+        <div class="text-center">
+          <div class="tank mx-auto"><div class="tank-fill" id="tankFill" style="height:10%"></div></div>
+          <p class="text-xs font-semibold mt-1">Likuiditas</p>
+          <span class="badge" id="liquidBadge">-</span>
+        </div>
+        <div class="text-center">
+          <div class="ring mx-auto" id="ringEmergency"><div class="ring-inner" id="emergencyValue">0%</div></div>
+          <p class="text-xs font-semibold mt-1">Dana Darurat</p>
+          <span class="badge" id="emergencyBadge">-</span>
+        </div>
+        <div class="text-center">
+          <div class="bg-[#264653] text-white rounded-lg p-2 mx-auto w-16 h-16 flex flex-col items-center justify-center shadow">
+            <span class="font-display font-bold text-sm" id="levelValue">Lv.1</span>
+            <div class="w-10 h-1 bg-white/20 rounded-full mt-1"><div class="h-full bg-[#C89B3C] rounded-full" id="xpFill" style="width:0%"></div></div>
+          </div>
+          <p class="text-xs font-semibold mt-1">Literasi</p>
+          <span class="text-[10px] text-[#2D2D2D]/50" id="literacyTitle">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kalender -->
+    <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl p-4 shadow-sm">
+      <h4 class="font-display font-semibold text-sm text-[#264653] flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-[#C89B3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        Kalender
+      </h4>
+      <div id="calendarContainer" class="grid grid-cols-7 gap-1 text-center"></div>
+      <div class="mt-3 text-xs text-[#2D2D2D]/50 text-center" id="calendarSummary">Pilih tanggal untuk melihat detail</div>
+    </div>
+
+    <!-- Form Tambah Transaksi -->
+    <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl p-4 shadow-sm">
+      <h4 class="font-display font-semibold text-sm text-[#264653] flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-[#C89B3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        Tambah Transaksi
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <input type="date" id="txDate" class="border border-[#2D2D2D]/10 rounded-lg px-3 py-2 text-sm" />
+        <input type="text" id="txDesc" placeholder="Deskripsi" class="border border-[#2D2D2D]/10 rounded-lg px-3 py-2 text-sm" />
+        <input type="text" inputmode="numeric" id="txAmount" placeholder="Nominal" class="border border-[#2D2D2D]/10 rounded-lg px-3 py-2 text-sm font-mono" />
+        <div class="flex gap-2">
+          <button id="btnAddIncome" class="flex-1 bg-[#7A9E7E] text-white rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80">+ Pemasukan</button>
+          <button id="btnAddExpense" class="flex-1 bg-[#C76D4E] text-white rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80">- Pengeluaran</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: PENDAPATAN ===== -->
+  <div id="tab-pendapatan" class="tab-content space-y-4">
+    <h2 class="font-display font-bold text-xl text-[#264653]">📈 Pendapatan</h2>
+    <div class="bg-white border border-[#2D2D2D]/10 rounded-xl p-3">
+      <div class="relative w-full h-40"><canvas id="incomeLineChart"></canvas></div>
+    </div>
+    <div id="incomeList" class="space-y-2"></div>
+  </div>
+
+  <!-- ===== TAB: PENGELUARAN ===== -->
+  <div id="tab-pengeluaran" class="tab-content space-y-4">
+    <h2 class="font-display font-bold text-xl text-[#264653]">📉 Pengeluaran</h2>
+    <div class="bg-muted-gold/5 border border-muted-gold/15 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
+      <label class="font-semibold text-sm text-[#264653] flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-[#C89B3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        Target Uang Jajan
+      </label>
+      <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" class="flex-1 min-w-[100px] px-3 py-1 border border-[#2D2D2D]/10 rounded-lg bg-white/60 font-mono font-bold text-sm" />
+      <span class="text-xs text-[#2D2D2D]/40">(panduan)</span>
+    </div>
+    <div class="bg-white border border-[#2D2D2D]/10 rounded-xl p-3">
+      <div class="relative w-full h-40"><canvas id="expenseLineChart"></canvas></div>
+    </div>
+    <div id="expenseList" class="space-y-2"></div>
+  </div>
+
+  <!-- ===== TAB: LAPORAN ===== -->
+  <div id="tab-laporan" class="tab-content space-y-4">
+    <h2 class="font-display font-bold text-xl text-[#264653]">📊 Laporan Keuangan</h2>
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="text-sm font-semibold text-[#264653]">Periode</label>
+      <select id="reportPeriod" class="px-3 py-1.5 border border-[#2D2D2D]/10 rounded-lg bg-white text-sm">
+        <option value="minggu">Mingguan</option>
+        <option value="bulan" selected>Bulanan</option>
+        <option value="tahun">Tahunan</option>
+      </select>
+      <label class="text-sm font-semibold text-[#264653]">Tanggal</label>
+      <input type="date" id="reportDate" class="px-3 py-1.5 border border-[#2D2D2D]/10 rounded-lg bg-white text-sm" />
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 text-center shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Total Pendapatan</div>
+        <div id="repTotalIn" class="font-mono font-bold text-lg text-[#C89B3C]">Rp0</div>
+      </div>
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 text-center shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Total Pengeluaran</div>
+        <div id="repTotalOut" class="font-mono font-bold text-lg text-[#C76D4E]">Rp0</div>
+      </div>
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 text-center shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Selisih</div>
+        <div id="repDiff" class="font-mono font-bold text-lg">Rp0</div>
+      </div>
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 text-center shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Rata-rata Harian</div>
+        <div id="repAvg" class="font-mono font-bold text-lg">Rp0</div>
+      </div>
+      <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl px-4 py-3 text-center shadow-sm">
+        <div class="text-xs text-[#2D2D2D]/50">Transaksi</div>
+        <div id="repCount" class="font-mono font-bold text-lg">0</div>
+      </div>
+    </div>
+    <div class="bg-white border border-[#2D2D2D]/10 rounded-2xl p-4 shadow-sm">
+      <div class="relative w-full h-64"><canvas id="reportChart"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// DASHBOARD LOGIC — Semua dalam satu file
+// ============================================================
+
+// ===== CEK SESSION =====
+const session = JSON.parse(localStorage.getItem('gwcatat_session') || 'null')
+if (!session) window.location.href = '/login.html'
+
+// ===== LOGOUT =====
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('gwcatat_session')
+  window.location.href = '/login.html'
+})
+
+// ===== STATE =====
+let currentMonth = currentMonthKey()
+let transactions = JSON.parse(localStorage.getItem('gwcatat_transactions') || '[]')
+let chartInstances = { pie: null, line: null, income: null, expense: null, report: null }
+
+// ===== HELPERS =====
+function currentMonthKey() {
+  const d = new Date()
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+}
+function monthLabel(key) {
+  const [y, m] = key.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+}
+function fmtRp(n) {
+  const v = Math.round(Number(n) || 0)
+  return (v < 0 ? '-' : '') + 'Rp' + Math.abs(v).toLocaleString('id-ID')
+}
+function parseRibuan(v) {
+  if (typeof v !== 'string') return Math.floor(Number(v) || 0)
+  const d = v.replace(/[^0-9]/g, '')
+  return d === '' ? 0 : parseInt(d, 10)
+}
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36) }
+function saveData() {
+  localStorage.setItem('gwcatat_transactions', JSON.stringify(transactions))
+}
+
+// ===== RENDER =====
+function renderAll() {
+  const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth))
+  document.getElementById('monthLabel').textContent = monthLabel(currentMonth)
+
+  renderSummary(monthTx)
+  renderCharts(monthTx)
+  renderIncomeList(monthTx)
+  renderExpenseList(monthTx)
+  renderCalendar(monthTx)
+  renderHealthIndicators(monthTx)
+  updateReport(monthTx)
+}
+
+function renderSummary(tx) {
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
+  const sisa = totalIn - totalOut
+  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0)
+  const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0)
+  const wealth = sisa + tabungan + darurat
+  document.getElementById('totalIn').textContent = fmtRp(totalIn)
+  document.getElementById('totalOut').textContent = fmtRp(totalOut)
+  document.getElementById('sisaSaldo').textContent = fmtRp(sisa)
+  document.getElementById('totalWealth').textContent = fmtRp(wealth)
+}
+// ===== CHARTS =====
+function safeDestroy(inst) { if (inst) { try { inst.destroy() } catch (e) {} } return null }
+
+function renderCharts(tx) {
+  // Pie
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
+  const pieCtx = document.getElementById('pieChart')
+  if (pieCtx) {
+    chartInstances.pie = safeDestroy(chartInstances.pie)
+    if (totalIn || totalOut) {
+      chartInstances.pie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pendapatan', 'Pengeluaran'],
+          datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#7A9E7E', '#C76D4E'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%', animation: false }
+      })
+    }
+  }
+
+  // Line
+  const days = {}
+  tx.forEach(t => {
+    if (t.date) {
+      if (!days[t.date]) days[t.date] = { in: 0, out: 0 }
+      if (t.type === 'in') days[t.date].in += Number(t.amount)
+      else days[t.date].out += Number(t.amount)
+    }
+  })
+  const dates = Object.keys(days).sort().slice(-31)
+  const labels = dates.map(d => d.slice(5))
+  const inData = dates.map(d => days[d].in || 0)
+  const outData = dates.map(d => days[d].out || 0)
+
+  const lineCtx = document.getElementById('lineChart')
+  if (lineCtx) {
+    chartInstances.line = safeDestroy(chartInstances.line)
+    if (labels.length) {
+      chartInstances.line = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Pendapatan', data: inData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
+            { label: 'Pengeluaran', data: outData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 2 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } }, animation: false }
+      })
+    }
+  }
+
+  // Income line
+  const incDays = {}
+  tx.filter(t => t.type === 'in').forEach(t => {
+    if (t.date) { incDays[t.date] = (incDays[t.date] || 0) + Number(t.amount) }
+  })
+  const incDates = Object.keys(incDays).sort().slice(-31)
+  const incLabels = incDates.map(d => d.slice(5))
+  const incData = incDates.map(d => incDays[d] || 0)
+  const incCtx = document.getElementById('incomeLineChart')
+  if (incCtx) {
+    chartInstances.income = safeDestroy(chartInstances.income)
+    if (incLabels.length) {
+      chartInstances.income = new Chart(incCtx, {
+        type: 'line',
+        data: { labels: incLabels, datasets: [{ label: 'Pendapatan', data: incData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: false }
+      })
+    }
+  }
+
+  // Expense line
+  const expDays = {}
+  tx.filter(t => t.type === 'out').forEach(t => {
+    if (t.date) { expDays[t.date] = (expDays[t.date] || 0) + Number(t.amount) }
+  })
+  const expDates = Object.keys(expDays).sort().slice(-31)
+  const expLabels = expDates.map(d => d.slice(5))
+  const expData = expDates.map(d => expDays[d] || 0)
+  const expCtx = document.getElementById('expenseLineChart')
+  if (expCtx) {
+    chartInstances.expense = safeDestroy(chartInstances.expense)
+    if (expLabels.length) {
+      chartInstances.expense = new Chart(expCtx, {
+        type: 'line',
+        data: { labels: expLabels, datasets: [{ label: 'Pengeluaran', data: expData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: false }
+      })
+    }
+  }
+}
+
+// ===== LISTS =====
+function renderIncomeList(tx) {
+  const list = document.getElementById('incomeList')
+  const items = tx.filter(t => t.type === 'in')
+  if (!items.length) { list.innerHTML = '<div class="text-sm text-[#2D2D2D]/40 py-4">Belum ada pendapatan</div>'; return }
+  list.innerHTML = items.map(t => `
+    <div class="flex items-center gap-3 px-3 py-2.5 bg-white border border-[#2D2D2D]/10 rounded-lg">
+      <div class="w-8 h-8 rounded bg-[#7A9E7E]/10 flex items-center justify-center text-[#7A9E7E]">⬆</div>
+      <div class="flex-1 min-w-0"><p class="text-sm font-medium truncate">${t.description || 'Pendapatan'}</p><p class="text-xs text-[#2D2D2D]/40">${t.date}</p></div>
+      <p class="font-mono font-bold text-sm text-[#7A9E7E]">+${fmtRp(t.amount)}</p>
+      <button class="tx-delete text-[#2D2D2D]/30 hover:text-[#C76D4E] p-1" data-id="${t.id}">✕</button>
+    </div>
+  `).join('')
+  document.querySelectorAll('.tx-delete').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id
+      transactions = transactions.filter(t => t.id !== id)
+      saveData()
+      renderAll()
+    })
+  })
+}
+
+function renderExpenseList(tx) {
+  const list = document.getElementById('expenseList')
+  const items = tx.filter(t => t.type === 'out')
+  if (!items.length) { list.innerHTML = '<div class="text-sm text-[#2D2D2D]/40 py-4">Belum ada pengeluaran</div>'; return }
+  list.innerHTML = items.map(t => `
+    <div class="flex items-center gap-3 px-3 py-2.5 bg-white border border-[#2D2D2D]/10 rounded-lg">
+      <div class="w-8 h-8 rounded bg-[#C76D4E]/10 flex items-center justify-center text-[#C76D4E]">⬇</div>
+      <div class="flex-1 min-w-0"><p class="text-sm font-medium truncate">${t.description || t.category || 'Pengeluaran'}</p><p class="text-xs text-[#2D2D2D]/40">${t.date}</p></div>
+      <p class="font-mono font-bold text-sm text-[#C76D4E]">-${fmtRp(t.amount)}</p>
+      <button class="tx-delete text-[#2D2D2D]/30 hover:text-[#C76D4E] p-1" data-id="${t.id}">✕</button>
+    </div>
+  `).join('')
+  document.querySelectorAll('.tx-delete').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id
+      transactions = transactions.filter(t => t.id !== id)
+      saveData()
+      renderAll()
+    })
+  })
+}
+
+// ===== CALENDAR =====
+function renderCalendar(tx) {
+  const container = document.getElementById('calendarContainer')
+  const [year, month] = currentMonth.split('-').map(Number)
+  const firstDay = new Date(year, month - 1, 1).getDay()
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+  let html = days.map(d => `<div class="text-xs font-semibold text-[#2D2D2D]/50 py-1">${d}</div>`).join('')
+  for (let i = 0; i < firstDay; i++) html += `<div class="calendar-day"></div>`
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    const dayTx = tx.filter(t => t.date === dateStr)
+    const totalIn = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+    const totalOut = dayTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
+    const has = totalIn > 0 || totalOut > 0
+    html += `<div class="calendar-day ${has ? 'has-tx' : ''}" data-date="${dateStr}">
+      <div class="day-num">${d}</div>
+      ${has ? `<div class="day-sum">${totalIn > 0 ? '<span class="in">+'+fmtRp(totalIn)+'</span>' : ''}${totalOut > 0 ? ' <span class="out">-'+fmtRp(totalOut)+'</span>' : ''}</div>` : ''}
+    </div>`
+  }
+  container.innerHTML = html
+  container.querySelectorAll('.calendar-day.has-tx').forEach(el => {
+    el.addEventListener('click', function() {
+      const date = this.dataset.date
+      const dayTx = tx.filter(t => t.date === date)
+      const totalIn = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+      const totalOut = dayTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
+      document.getElementById('calendarSummary').textContent = `${date} → Pendapatan: ${fmtRp(totalIn)} | Pengeluaran: ${fmtRp(totalOut)}`
+    })
+  })
+}
+
+// ===== HEALTH INDICATORS =====
+function renderHealthIndicators(tx) {
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const base = totalIn || 1
+  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0)
+  const keinginan = tx.filter(t => t.type === 'out' && t.category === 'keinginan').reduce((s, t) => s + Number(t.amount), 0)
+  const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0)
+  const savingsRatio = (tabungan / base) * 100
+  const lifestyleRatio = (keinginan / base) * 100
+  const emergencyRatio = darurat / 200000 * 100
+
+  // Savings
+  const sv = savingsRatio >= 20 ? { color: '#7A9E7E', label: 'Sehat' } : savingsRatio >= 10 ? { color: '#C89B3C', label: 'Waspada' } : { color: '#C76D4E', label: 'Bahaya' }
+  const ringSavings = document.getElementById('ringSavings')
+  if (ringSavings) ringSavings.style.background = `conic-gradient(${sv.color} ${Math.min(100, savingsRatio) * 3.6}deg, #F1EFEA ${Math.min(100, savingsRatio) * 3.6}deg)`
+  document.getElementById('savingsValue').textContent = Math.round(savingsRatio) + '%'
+  const savingsBadge = document.getElementById('savingsBadge')
+  if (savingsBadge) {
+    savingsBadge.textContent = sv.label
+    savingsBadge.className = 'badge ' + (sv.label === 'Bahaya' ? 'danger' : sv.label === 'Waspada' ? 'warn' : '')
+  }
+
+  // Lifestyle
+  const ls = lifestyleRatio <= 30 ? { color: '#7A9E7E', label: 'Sehat' } : lifestyleRatio <= 45 ? { color: '#C89B3C', label: 'Waspada' } : { color: '#C76D4E', label: 'Bahaya' }
+  const ringLifestyle = document.getElementById('ringLifestyle')
+  if (ringLifestyle) ringLifestyle.style.background = `conic-gradient(${ls.color} ${Math.min(100, 100 - lifestyleRatio) * 3.6}deg, #F1EFEA ${Math.min(100, 100 - lifestyleRatio) * 3.6}deg)`
+  document.getElementById('lifestyleValue').textContent = Math.round(lifestyleRatio) + '%'
+  const lifestyleBadge = document.getElementById('lifestyleBadge')
+  if (lifestyleBadge) {
+    lifestyleBadge.textContent = ls.label
+    lifestyleBadge.className = 'badge ' + (ls.label === 'Bahaya' ? 'danger' : ls.label === 'Waspada' ? 'warn' : '')
+  }
+
+  // Liquid
+  const liquidBadge = document.getElementById('liquidBadge')
+  if (liquidBadge) {
+    liquidBadge.textContent = 'Aman'
+    liquidBadge.className = 'badge'
+  }
+
+  // Emergency
+  const em = emergencyRatio >= 100 ? { color: '#7A9E7E', label: 'Terpenuhi' } : emergencyRatio >= 50 ? { color: '#C89B3C', label: 'Menuju' } : { color: '#C76D4E', label: 'Mulai' }
+  const ringEmergency = document.getElementById('ringEmergency')
+  if (ringEmergency) ringEmergency.style.background = `conic-gradient(${em.color} ${Math.min(100, emergencyRatio) * 3.6}deg, #F1EFEA ${Math.min(100, emergencyRatio) * 3.6}deg)`
+  document.getElementById('emergencyValue').textContent = Math.round(Math.min(100, emergencyRatio)) + '%'
+  const emergencyBadge = document.getElementById('emergencyBadge')
+  if (emergencyBadge) {
+    emergencyBadge.textContent = em.label
+    emergencyBadge.className = 'badge ' + (em.label === 'Mulai' ? 'warn' : '')
+  }
+
+  // Literacy
+  const score = (Math.min(100, savingsRatio) + Math.min(100, 100 - lifestyleRatio) + 100 + Math.min(100, emergencyRatio)) / 4
+  const level = Math.min(5, Math.max(1, Math.floor(score / 20) + 1))
+  const titles = ['Pemula', 'Belajar', 'Cermat', 'Jagoan', 'Master']
+  document.getElementById('levelValue').textContent = 'Lv.' + level
+  document.getElementById('xpFill').style.width = (score % 20) * 5 + '%'
+  document.getElementById('literacyTitle').textContent = titles[level - 1] + ' · ' + Math.round(score) + '/100'
+}
+
+// ===== REPORT =====
+function updateReport(tx) {
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
+  const diff = totalIn - totalOut
+  const count = tx.length
+  const avg = count ? (totalIn + totalOut) / 30 : 0
+  document.getElementById('repTotalIn').textContent = fmtRp(totalIn)
+  document.getElementById('repTotalOut').textContent = fmtRp(totalOut)
+  document.getElementById('repDiff').textContent = fmtRp(diff)
+  document.getElementById('repDiff').style.color = diff >= 0 ? '#7A9E7E' : '#C76D4E'
+  document.getElementById('repAvg').textContent = fmtRp(avg)
+  document.getElementById('repCount').textContent = count
+
+  // Report chart
+  const days = {}
+  tx.forEach(t => {
+    if (t.date) {
+      if (!days[t.date]) days[t.date] = { in: 0, out: 0 }
+      if (t.type === 'in') days[t.date].in += Number(t.amount)
+      else days[t.date].out += Number(t.amount)
+    }
+  })
+  const dates = Object.keys(days).sort().slice(-31)
+  const labels = dates.map(d => d.slice(5))
+  const inData = dates.map(d => days[d].in || 0)
+  const outData = dates.map(d => days[d].out || 0)
+  const ctx = document.getElementById('reportChart')
+  if (ctx) {
+    chartInstances.report = safeDestroy(chartInstances.report)
+    if (labels.length) {
+      chartInstances.report = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Pendapatan', data: inData, backgroundColor: 'rgba(122,158,126,0.6)', borderColor: '#7A9E7E', borderWidth: 1 },
+            { label: 'Pengeluaran', data: outData, backgroundColor: 'rgba(199,109,78,0.6)', borderColor: '#C76D4E', borderWidth: 1 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } }, animation: false }
+      })
+    }
+  }
+}
+
+// ===== NAVIGATION =====
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
+    this.classList.add('active')
+    const tab = this.dataset.tab
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'))
+    document.getElementById('tab-' + tab).classList.add('active')
+    if (tab === 'laporan') updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+  })
+})
+
+// ===== FORM =====
+const dateInput = document.getElementById('txDate')
+const descInput = document.getElementById('txDesc')
+const amountInput = document.getElementById('txAmount')
+dateInput.value = new Date().toISOString().slice(0, 10)
+
+amountInput.addEventListener('input', function() {
+  const val = this.value.replace(/[^0-9]/g, '')
+  if (val) this.value = Number(val).toLocaleString('id-ID')
+})
+
+function addTx(type) {
+  const date = dateInput.value
+  const description = descInput.value.trim() || (type === 'in' ? 'Pendapatan' : 'Pengeluaran')
+  const amount = parseRibuan(amountInput.value)
+  if (!date || !amount) { alert('Isi tanggal dan nominal'); return }
+  const tx = {
+    id: uid(),
+    date,
+    description,
+    amount,
+    type,
+    category: type === 'in' ? 'uang_jajan' : 'kebutuhan'
+  }
+  transactions.push(tx)
+  saveData()
+  amountInput.value = ''
+  descInput.value = ''
+  renderAll()
+}
+
+document.getElementById('btnAddIncome').addEventListener('click', () => addTx('in'))
+document.getElementById('btnAddExpense').addEventListener('click', () => addTx('out'))
+
+// ===== MONTH NAV =====
+document.getElementById('prevMonth').addEventListener('click', () => {
+  const [y, m] = currentMonth.split('-').map(Number)
+  currentMonth = (m === 1) ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0')
+  renderAll()
+})
+document.getElementById('nextMonth').addEventListener('click', () => {
+  const [y, m] = currentMonth.split('-').map(Number)
+  currentMonth = (m === 12) ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0')
+  renderAll()
+})
+
+// ===== REPORT FILTERS =====
+document.getElementById('reportPeriod').addEventListener('change', () => {
+  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+})
+document.getElementById('reportDate').addEventListener('change', () => {
+  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+})
+document.getElementById('reportDate').value = new Date().toISOString().slice(0, 10)
+
+// ===== INIT =====
+renderAll()
+</script>
+
+</body>
+</html>
