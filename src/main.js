@@ -1,11 +1,10 @@
 // ============================================================
-// src/main.js — Dashboard Logic (tanpa import Chart)
+// src/main.js — Dashboard Logic
 // ============================================================
 
 import { supabase } from './supabase.js'
 
 // Chart.js sudah tersedia global dari CDN, tidak perlu import
-// const Chart = window.Chart // opsional
 
 // ===== STATE =====
 let currentMonth = currentMonthKey()
@@ -18,8 +17,8 @@ function currentMonthKey() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
 }
 function monthLabel(key) {
-  const [y,m] = key.split('-').map(Number)
-  return new Date(y, m-1, 1).toLocaleDateString('id-ID', { month:'long', year:'numeric' })
+  const [y, m] = key.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
 }
 function fmtRp(n) {
   const v = Math.round(Number(n) || 0)
@@ -27,10 +26,10 @@ function fmtRp(n) {
 }
 function parseRibuan(v) {
   if (typeof v !== 'string') return Math.floor(Number(v) || 0)
-  const d = v.replace(/[^0-9]/g,'')
-  return d === '' ? 0 : parseInt(d,10)
+  const d = v.replace(/[^0-9]/g, '')
+  return d === '' ? 0 : parseInt(d, 10)
 }
-function uid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36) }
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36) }
 
 // ===== SUPABASE =====
 async function fetchTransactions() {
@@ -71,11 +70,11 @@ async function renderAll() {
 }
 
 function renderSummary(tx) {
-  const totalIn = tx.filter(t => t.type === 'in').reduce((s,t) => s + Number(t.amount), 0)
-  const totalOut = tx.filter(t => t.type === 'out').reduce((s,t) => s + Number(t.amount), 0)
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
   const sisa = totalIn - totalOut
-  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s,t) => s + Number(t.amount), 0)
-  const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s,t) => s + Number(t.amount), 0)
+  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0)
+  const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0)
   const wealth = sisa + tabungan + darurat
   document.getElementById('totalIn').textContent = fmtRp(totalIn)
   document.getElementById('totalOut').textContent = fmtRp(totalOut)
@@ -84,12 +83,12 @@ function renderSummary(tx) {
 }
 
 // ===== CHARTS =====
-function safeDestroy(inst) { if (inst) { try { inst.destroy() } catch(e) {} } return null }
+function safeDestroy(inst) { if (inst) { try { inst.destroy() } catch (e) { } } return null }
 
 function renderCharts(tx) {
   // Pie
-  const totalIn = tx.filter(t => t.type === 'in').reduce((s,t) => s + Number(t.amount), 0)
-  const totalOut = tx.filter(t => t.type === 'out').reduce((s,t) => s + Number(t.amount), 0)
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
   const pieCtx = document.getElementById('pieChart')
   if (pieCtx) {
     chartInstances.pie = safeDestroy(chartInstances.pie)
@@ -188,7 +187,7 @@ function renderIncomeList(tx) {
     </div>
   `).join('')
   list.querySelectorAll('.tx-delete').forEach(btn => {
-    btn.addEventListener('click', async function() {
+    btn.addEventListener('click', async function () {
       const id = this.dataset.id
       await deleteTransaction(id)
       renderAll()
@@ -210,7 +209,7 @@ function renderExpenseList(tx) {
     </div>
   `).join('')
   list.querySelectorAll('.tx-delete').forEach(btn => {
-    btn.addEventListener('click', async function() {
+    btn.addEventListener('click', async function () {
       const id = this.dataset.id
       await deleteTransaction(id)
       renderAll()
@@ -223,16 +222,16 @@ function renderExpenseList(tx) {
 function renderCalendar(tx) {
   const container = document.getElementById('calendarContainer')
   const [year, month] = currentMonth.split('-').map(Number)
-  const firstDay = new Date(year, month-1, 1).getDay()
+  const firstDay = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
-  const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
   let html = days.map(d => `<div class="text-xs font-semibold text-charcoal/50 py-1">${d}</div>`).join('')
-  for (let i=0; i<firstDay; i++) html += `<div class="calendar-day empty"></div>`
-  for (let d=1; d<=daysInMonth; d++) {
-    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+  for (let i = 0; i < firstDay; i++) html += `<div class="calendar-day empty"></div>`
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     const dayTx = tx.filter(t => t.date === dateStr)
-    const totalIn = dayTx.filter(t => t.type === 'in').reduce((s,t) => s + Number(t.amount), 0)
-    const totalOut = dayTx.filter(t => t.type === 'out').reduce((s,t) => s + Number(t.amount), 0)
+    const totalIn = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+    const totalOut = dayTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
     const has = totalIn > 0 || totalOut > 0
     html += `<div class="calendar-day ${has ? 'has-transaction' : ''}" data-date="${dateStr}">
       <span class="day-number">${d}</span>
@@ -241,11 +240,11 @@ function renderCalendar(tx) {
   }
   container.innerHTML = html
   container.querySelectorAll('.calendar-day.has-transaction').forEach(el => {
-    el.addEventListener('click', function() {
+    el.addEventListener('click', function () {
       const date = this.dataset.date
       const dayTx = tx.filter(t => t.date === date)
-      const totalIn = dayTx.filter(t => t.type === 'in').reduce((s,t) => s + Number(t.amount), 0)
-      const totalOut = dayTx.filter(t => t.type === 'out').reduce((s,t) => s + Number(t.amount), 0)
+      const totalIn = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+      const totalOut = dayTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
       document.getElementById('calendarSummary').textContent = `${date} → Pendapatan: ${fmtRp(totalIn)} | Pengeluaran: ${fmtRp(totalOut)}`
     })
   })
@@ -253,53 +252,53 @@ function renderCalendar(tx) {
 
 // ===== HEALTH INDICATORS =====
 function renderHealthIndicators(tx) {
-  const totalIn = tx.filter(t => t.type === 'in').reduce((s,t) => s + Number(t.amount), 0)
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
   const base = totalIn || 1
-  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s,t) => s + Number(t.amount), 0)
-  const keinginan = tx.filter(t => t.type === 'out' && t.category === 'keinginan').reduce((s,t) => s + Number(t.amount), 0)
-  const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s,t) => s + Number(t.amount), 0)
+  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0)
+  const keinginan = tx.filter(t => t.type === 'out' && t.category === 'keinginan').reduce((s, t) => s + Number(t.amount), 0)
+  const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0)
   const savingsRatio = (tabungan / base) * 100
   const lifestyleRatio = (keinginan / base) * 100
   const emergencyRatio = darurat / 200000 * 100
 
   // Savings
-  const sv = savingsRatio >= 20 ? {color:'#7A9E7E', label:'Sehat'} : savingsRatio >= 10 ? {color:'#C89B3C', label:'Waspada'} : {color:'#C76D4E', label:'Bahaya'}
-  document.getElementById('ringSavings').style.background = `conic-gradient(${sv.color} ${Math.min(100,savingsRatio)*3.6}deg, #F1EFEA ${Math.min(100,savingsRatio)*3.6}deg)`
-  document.getElementById('savingsValue').textContent = Math.round(savingsRatio)+'%'
+  const sv = savingsRatio >= 20 ? { color: '#7A9E7E', label: 'Sehat' } : savingsRatio >= 10 ? { color: '#C89B3C', label: 'Waspada' } : { color: '#C76D4E', label: 'Bahaya' }
+  document.getElementById('ringSavings').style.background = `conic-gradient(${sv.color} ${Math.min(100, savingsRatio) * 3.6}deg, #F1EFEA ${Math.min(100, savingsRatio) * 3.6}deg)`
+  document.getElementById('savingsValue').textContent = Math.round(savingsRatio) + '%'
   document.getElementById('savingsBadge').textContent = sv.label
-  document.getElementById('savingsBadge').className = 'badge ' + (sv.label==='Bahaya' ? 'danger' : sv.label==='Waspada' ? 'warn' : '')
+  document.getElementById('savingsBadge').className = 'badge ' + (sv.label === 'Bahaya' ? 'danger' : sv.label === 'Waspada' ? 'warn' : '')
 
   // Lifestyle
-  const ls = lifestyleRatio <= 30 ? {color:'#7A9E7E', label:'Sehat'} : lifestyleRatio <= 45 ? {color:'#C89B3C', label:'Waspada'} : {color:'#C76D4E', label:'Bahaya'}
-  document.getElementById('ringLifestyle').style.background = `conic-gradient(${ls.color} ${Math.min(100,100-lifestyleRatio)*3.6}deg, #F1EFEA ${Math.min(100,100-lifestyleRatio)*3.6}deg)`
-  document.getElementById('lifestyleValue').textContent = Math.round(lifestyleRatio)+'%'
+  const ls = lifestyleRatio <= 30 ? { color: '#7A9E7E', label: 'Sehat' } : lifestyleRatio <= 45 ? { color: '#C89B3C', label: 'Waspada' } : { color: '#C76D4E', label: 'Bahaya' }
+  document.getElementById('ringLifestyle').style.background = `conic-gradient(${ls.color} ${Math.min(100, 100 - lifestyleRatio) * 3.6}deg, #F1EFEA ${Math.min(100, 100 - lifestyleRatio) * 3.6}deg)`
+  document.getElementById('lifestyleValue').textContent = Math.round(lifestyleRatio) + '%'
   document.getElementById('lifestyleBadge').textContent = ls.label
-  document.getElementById('lifestyleBadge').className = 'badge ' + (ls.label==='Bahaya' ? 'danger' : ls.label==='Waspada' ? 'warn' : '')
+  document.getElementById('lifestyleBadge').className = 'badge ' + (ls.label === 'Bahaya' ? 'danger' : ls.label === 'Waspada' ? 'warn' : '')
 
   // Liquid (dummy)
   document.getElementById('liquidBadge').textContent = 'Aman'
   document.getElementById('liquidBadge').className = 'badge'
 
   // Emergency
-  const em = emergencyRatio >= 100 ? {color:'#7A9E7E', label:'Terpenuhi'} : emergencyRatio >= 50 ? {color:'#C89B3C', label:'Menuju'} : {color:'#C76D4E', label:'Mulai'}
-  document.getElementById('ringEmergency').style.background = `conic-gradient(${em.color} ${Math.min(100,emergencyRatio)*3.6}deg, #F1EFEA ${Math.min(100,emergencyRatio)*3.6}deg)`
-  document.getElementById('emergencyValue').textContent = Math.round(Math.min(100,emergencyRatio))+'%'
+  const em = emergencyRatio >= 100 ? { color: '#7A9E7E', label: 'Terpenuhi' } : emergencyRatio >= 50 ? { color: '#C89B3C', label: 'Menuju' } : { color: '#C76D4E', label: 'Mulai' }
+  document.getElementById('ringEmergency').style.background = `conic-gradient(${em.color} ${Math.min(100, emergencyRatio) * 3.6}deg, #F1EFEA ${Math.min(100, emergencyRatio) * 3.6}deg)`
+  document.getElementById('emergencyValue').textContent = Math.round(Math.min(100, emergencyRatio)) + '%'
   document.getElementById('emergencyBadge').textContent = em.label
-  document.getElementById('emergencyBadge').className = 'badge ' + (em.label==='Mulai' ? 'warn' : '')
+  document.getElementById('emergencyBadge').className = 'badge ' + (em.label === 'Mulai' ? 'warn' : '')
 
   // Literacy
-  const score = (Math.min(100,savingsRatio) + Math.min(100,100-lifestyleRatio) + 100 + Math.min(100,emergencyRatio)) / 4
-  const level = Math.min(5, Math.max(1, Math.floor(score/20)+1))
-  const titles = ['Pemula','Belajar','Cermat','Jagoan','Master']
-  document.getElementById('levelValue').textContent = 'Lv.'+level
+  const score = (Math.min(100, savingsRatio) + Math.min(100, 100 - lifestyleRatio) + 100 + Math.min(100, emergencyRatio)) / 4
+  const level = Math.min(5, Math.max(1, Math.floor(score / 20) + 1))
+  const titles = ['Pemula', 'Belajar', 'Cermat', 'Jagoan', 'Master']
+  document.getElementById('levelValue').textContent = 'Lv.' + level
   document.getElementById('xpFill').style.width = (score % 20) * 5 + '%'
-  document.getElementById('literacyTitle').textContent = titles[level-1] + ' · ' + Math.round(score) + '/100'
+  document.getElementById('literacyTitle').textContent = titles[level - 1] + ' · ' + Math.round(score) + '/100'
 }
 
 // ===== REPORT =====
 function updateReport(tx) {
-  const totalIn = tx.filter(t => t.type === 'in').reduce((s,t) => s + Number(t.amount), 0)
-  const totalOut = tx.filter(t => t.type === 'out').reduce((s,t) => s + Number(t.amount), 0)
+  const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
   const diff = totalIn - totalOut
   const count = tx.length
   const avg = count ? (totalIn + totalOut) / 30 : 0
@@ -314,7 +313,7 @@ function updateReport(tx) {
   const days = {}
   tx.forEach(t => {
     if (t.date) {
-      if (!days[t.date]) days[t.date] = { in:0, out:0 }
+      if (!days[t.date]) days[t.date] = { in: 0, out: 0 }
       if (t.type === 'in') days[t.date].in += Number(t.amount)
       else days[t.date].out += Number(t.amount)
     }
@@ -359,7 +358,7 @@ function setupNavigation() {
   })
 
   navBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
       navBtns.forEach(b => b.classList.remove('active'))
       this.classList.add('active')
       const tab = this.dataset.tab
@@ -410,10 +409,10 @@ function setupForm() {
   const dateInput = document.getElementById('txDate')
   const descInput = document.getElementById('txDesc')
   const amountInput = document.getElementById('txAmount')
-  dateInput.value = new Date().toISOString().slice(0,10)
+  dateInput.value = new Date().toISOString().slice(0, 10)
 
-  amountInput.addEventListener('input', function() {
-    const val = this.value.replace(/[^0-9]/g,'')
+  amountInput.addEventListener('input', function () {
+    const val = this.value.replace(/[^0-9]/g, '')
     if (val) this.value = Number(val).toLocaleString('id-ID')
   })
 
@@ -421,7 +420,7 @@ function setupForm() {
     const date = dateInput.value
     const description = descInput.value.trim() || (type === 'in' ? 'Pendapatan' : 'Pengeluaran')
     const amount = parseRibuan(amountInput.value)
-    if (!date || !amount) { alert('Isi tanggal dan nominal') ; return }
+    if (!date || !amount) { alert('Isi tanggal dan nominal'); return }
     const user = await supabase.auth.getUser()
     const tx = {
       id: uid(),
@@ -446,13 +445,13 @@ function setupForm() {
 
 function setupMonthNav() {
   document.getElementById('prevMonth').addEventListener('click', () => {
-    const [y,m] = currentMonth.split('-').map(Number)
-    currentMonth = (m === 1) ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0')
+    const [y, m] = currentMonth.split('-').map(Number)
+    currentMonth = (m === 1) ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0')
     renderAll()
   })
   document.getElementById('nextMonth').addEventListener('click', () => {
-    const [y,m] = currentMonth.split('-').map(Number)
-    currentMonth = (m === 12) ? (y+1)+'-01' : y+'-'+String(m+1).padStart(2,'0')
+    const [y, m] = currentMonth.split('-').map(Number)
+    currentMonth = (m === 12) ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0')
     renderAll()
   })
 }
@@ -502,7 +501,7 @@ function setupPopup() {
   })
 
   document.querySelectorAll('[data-popup]').forEach(el => {
-    el.addEventListener('click', function() {
+    el.addEventListener('click', function () {
       const key = this.dataset.popup
       openPopup(key)
     })
