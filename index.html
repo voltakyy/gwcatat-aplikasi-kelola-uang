@@ -1,329 +1,215 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gwcatat — Catat Uang, Tenang Nanti</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gwcatat</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<div id="app" class="max-w-7xl mx-auto px-4 py-6 relative">
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Tombol toggle sidebar -->
+  <button id="sidebarToggle" class="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md border border-beige hover:bg-gray-100 transition-colors">
+    <i data-lucide="menu" class="w-6 h-6 text-deep-forest"></i>
+  </button>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Sidebar -->
+  <nav id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white border-r border-beige shadow-lg z-40 transform -translate-x-full transition-transform duration-200 ease-in-out overflow-y-auto">
+    <div class="p-4 border-b border-beige flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-deep-forest flex items-center justify-center">
+        <svg viewBox="0 0 40 40" class="w-5 h-5 stroke-muted-gold fill-none stroke-[2.4]"><circle cx="20" cy="20" r="17" /><path d="M13 28 L13 13 L20 22 L27 13 L27 28" /><path d="M20 22 L20 28" /></svg>
+      </div>
+      <span class="font-display font-bold text-lg text-deep-forest">gwcatat</span>
+    </div>
+    <div class="p-3 space-y-1">
+      <button data-tab="beranda" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors active">
+        <i data-lucide="home" class="w-5 h-5"></i> Beranda
+      </button>
+      <button data-tab="pendapatan" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors">
+        <i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Pendapatan
+      </button>
+      <button data-tab="pengeluaran" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors">
+        <i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Pengeluaran
+      </button>
+      <button data-tab="laporan" class="nav-btn w-full text-left px-3 py-2 rounded-md flex items-center gap-2 hover:bg-gray-100 transition-colors">
+        <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Laporan
+      </button>
+    </div>
+  </nav>
 
-    <!-- Tailwind output (dihasilkan Vite) -->
-    <link rel="stylesheet" href="/src/style.css" />
-  </head>
-  <body class="bg-warm-ivory font-body text-charcoal antialiased min-h-screen">
+  <!-- Overlay untuk nutup sidebar -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/20 z-30 hidden"></div>
 
-    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col md:flex-row gap-6 relative">
+  <!-- Konten utama -->
+  <div class="ml-0 transition-all duration-200">
 
-      <!-- ============================================================
-      MAIN NAV – LEFT SIDEBAR
-      ============================================================ -->
-      <nav class="md:sticky md:top-6 md:min-w-[140px] md:flex-shrink-0 flex md:flex-col gap-1.5 bg-white/75 backdrop-blur-sm rounded-2xl border border-beige shadow-sm p-3 h-fit">
-        <button data-tab="beranda" class="nav-btn active">
-          <i data-lucide="home" class="w-5 h-5"></i> Beranda
-        </button>
-        <button data-tab="pendapatan" class="nav-btn">
-          <i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Pendapatan
-        </button>
-        <button data-tab="pengeluaran" class="nav-btn">
-          <i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Pengeluaran
-        </button>
-        <button data-tab="laporan" class="nav-btn">
-          <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Laporan
-        </button>
-      </nav>
-
-      <!-- ============================================================
-      CONTENT AREA
-      ============================================================ -->
-      <div class="flex-1 min-w-0 space-y-5">
-
-        <!-- ======= HEADER ======= -->
-        <header class="flex flex-wrap items-center justify-between gap-3 bg-white/70 backdrop-blur-sm border border-beige rounded-2xl px-4 sm:px-6 py-3 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-deep-forest flex items-center justify-center shadow-md">
-              <svg viewBox="0 0 40 40" class="w-6 h-6 stroke-muted-gold fill-none stroke-[2.4] stroke-linecap-round stroke-linejoin-round">
-                <circle cx="20" cy="20" r="17" />
-                <path d="M13 28 L13 13 L20 22 L27 13 L27 28" />
-                <path d="M20 22 L20 28" />
-              </svg>
-            </div>
-            <div>
-              <h1 class="font-display font-bold text-xl text-deep-forest tracking-tight">gwcatat</h1>
-              <p class="text-xs text-charcoal/60">Semua uang punya cerita.</p>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-1 bg-warm-ivory border border-beige rounded-full pl-3 pr-1 py-1">
-              <button id="prevMonth" class="p-1 rounded-full hover:bg-black/5 transition"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-              <span id="monthLabel" class="font-display font-semibold text-sm text-deep-forest min-w-[100px] text-center">Juli 2026</span>
-              <button id="nextMonth" class="p-1 rounded-full hover:bg-black/5 transition"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span id="storageStatus" class="text-[11px] text-charcoal/50 px-2 py-1 bg-warm-ivory border border-beige rounded-full">Siap</span>
-              <button id="connectFileBtn" class="text-xs font-semibold px-3 py-1.5 border border-beige rounded-full bg-white/60 hover:border-muted-gold hover:text-muted-gold transition">Hubungkan</button>
-              <button id="exportBtn" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-deep-forest text-white shadow-md hover:bg-deep-forest/90 transition">Simpan</button>
-              <button id="importBtn" class="text-xs font-semibold px-3 py-1.5 border border-beige rounded-full bg-white/60 hover:border-muted-gold hover:text-muted-gold transition">Muat</button>
-              <input type="file" id="importFileInput" accept=".txt" hidden />
-            </div>
-          </div>
-        </header>
-
-        <!-- ======= STORAGE HELP CARD ======= -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/60 backdrop-blur-sm border border-beige rounded-2xl p-5 shadow-sm">
-          <div>
-            <p class="font-display font-bold text-sm text-deep-forest flex items-center gap-2"><i data-lucide="download" class="w-4 h-4 text-muted-gold"></i> Cara Simpan Data</p>
-            <ol class="list-decimal list-inside text-xs text-charcoal/70 space-y-0.5 mt-1">
-              <li>Klik <strong>Simpan</strong>.</li>
-              <li>Browser akan unduh file <strong>storage.txt</strong>.</li>
-              <li>Simpan di folder yang kamu inginkan.</li>
-            </ol>
-          </div>
-          <div>
-            <p class="font-display font-bold text-sm text-deep-forest flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4 text-muted-gold"></i> Cara Muat Kembali</p>
-            <ol class="list-decimal list-inside text-xs text-charcoal/70 space-y-0.5 mt-1">
-              <li>Klik <strong>Muat</strong>.</li>
-              <li>Pilih file <strong>storage.txt</strong> yang sudah disimpan.</li>
-              <li>Semua data transaksi, aset, target, dan riwayat bulanan pulih.</li>
-            </ol>
-          </div>
-          <div class="md:col-span-2 flex items-center gap-3 bg-muted-gold/10 border border-muted-gold/20 rounded-xl px-4 py-2.5 text-xs text-charcoal/70">
-            <i data-lucide="lightbulb" class="w-5 h-5 text-muted-gold flex-shrink-0"></i>
-            <span>Tips: Pakai file <strong>storage.txt</strong> yang sama tiap kali lanjut catat, biar data tetap utuh.</span>
-          </div>
+    <!-- Header -->
+    <header class="flex flex-wrap items-center justify-between gap-3 bg-white border border-beige rounded-2xl px-4 sm:px-6 py-3 shadow-sm mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-deep-forest flex items-center justify-center shadow-sm">
+          <svg viewBox="0 0 40 40" class="w-5 h-5 stroke-muted-gold fill-none stroke-[2.4]"><circle cx="20" cy="20" r="17" /><path d="M13 28 L13 13 L20 22 L27 13 L27 28" /><path d="M20 22 L20 28" /></svg>
         </div>
-
-        <!-- ======= TAB: BERANDA ======= -->
-        <div id="tab-beranda" class="tab-content active space-y-6">
-
-          <!-- SUMMARY CARDS -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div data-popup="income" class="summary-card">
-              <div class="flex items-center gap-1.5 text-xs text-charcoal/50"><i data-lucide="arrow-down-circle" class="w-4 h-4"></i> Pemasukan</div>
-              <div id="totalIn" class="font-mono font-bold text-lg text-charcoal">Rp0</div>
-            </div>
-            <div data-popup="expense" class="summary-card">
-              <div class="flex items-center gap-1.5 text-xs text-charcoal/50"><i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Pengeluaran</div>
-              <div id="totalOut" class="font-mono font-bold text-lg text-charcoal">Rp0</div>
-            </div>
-            <div data-popup="balance" class="summary-card bg-gradient-to-br from-muted-gold to-[#b8892e] text-white border-muted-gold">
-              <div class="flex items-center gap-1.5 text-xs text-white/70"><i data-lucide="wallet" class="w-4 h-4"></i> Sisa di Tangan</div>
-              <div id="sisaSaldo" class="font-mono font-bold text-lg text-white">Rp0</div>
-            </div>
-            <div data-popup="wealth" id="wealthCard" class="summary-card bg-deep-forest text-white border-deep-forest">
-              <div class="flex items-center gap-1.5 text-xs text-white/60"><i data-lucide="briefcase" class="w-4 h-4"></i> Total Kekayaan</div>
-              <div id="totalWealth" class="font-mono font-bold text-lg text-white">Rp0</div>
-            </div>
-          </div>
-
-          <!-- GAUGE GRID -->
-          <div>
-            <h2 class="font-display font-bold text-lg text-deep-forest flex items-center gap-2 mb-3">
-              <i data-lucide="activity" class="w-5 h-5 text-muted-gold"></i> Indikator Kesehatan Keuangan
-              <span class="text-sm font-normal text-charcoal/40">— klik buat detail</span>
-            </h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <div data-popup="savings" class="gauge-card">
-                <div class="ring" id="ringSavings"><div class="ring-inner"><i data-lucide="piggy-bank" class="w-4 h-4"></i><span id="savingsValue">0%</span></div></div>
-                <p class="gauge-title">Rasio Tabungan</p>
-                <p class="text-[10px] text-charcoal/40">Target ≥ 20%</p>
-                <span class="badge" id="savingsBadge">Rendah</span>
-              </div>
-              <div data-popup="lifestyle" class="gauge-card">
-                <div class="ring" id="ringLifestyle"><div class="ring-inner"><i data-lucide="sparkles" class="w-4 h-4"></i><span id="lifestyleValue">0%</span></div></div>
-                <p class="gauge-title">Rasio Gaya Hidup</p>
-                <p class="text-[10px] text-charcoal/40">Batas ≤ 30%</p>
-                <span class="badge" id="lifestyleBadge">Terkendali</span>
-              </div>
-              <div data-popup="liquid" class="gauge-card">
-                <div class="tank"><div class="tank-fill" id="tankFill"></div></div>
-                <p class="gauge-title">Aset Likuid Bersih</p>
-                <p class="font-mono font-bold text-xs text-charcoal" id="liquidValue">Rp0</p>
-                <span class="badge" id="liquidBadge">Aman</span>
-              </div>
-              <div data-popup="emergency" class="gauge-card">
-                <div class="ring" id="ringEmergency"><div class="ring-inner"><i data-lucide="life-buoy" class="w-4 h-4"></i><span id="emergencyValue">0%</span></div></div>
-                <p class="gauge-title">Dana Darurat</p>
-                <p class="text-[10px] text-charcoal/40" id="emergencyTargetLabel">Target Rp0</p>
-                <span class="badge" id="emergencyBadge">Mulai</span>
-              </div>
-              <div data-popup="literacy" class="gauge-card">
-                <div class="level-badge"><i data-lucide="graduation-cap" class="w-4 h-4"></i><span id="levelValue">Lv.1</span><div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div></div>
-                <p class="gauge-title">Skor Literasi</p>
-                <p class="text-[10px] text-charcoal/40" id="literacyTitle">Pemula · 0/100</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- CHARTS -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Card Pie Chart -->
-            <div class="chart-box bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-4 shadow-sm min-h-0">
-              <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="pie-chart" class="w-4 h-4 text-muted-gold"></i> Perbandingan</h4>
-              <!-- Wrapper canvas dengan tinggi tetap -->
-              <div class="relative w-full h-64 md:h-72">
-                <canvas id="pieChart"></canvas>
-              </div>
-            </div>
-            <!-- Card Line Chart -->
-            <div class="chart-box bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-4 shadow-sm min-h-0">
-              <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="trending-up" class="w-4 h-4 text-muted-gold"></i> Tren Harian</h4>
-              <div class="relative w-full h-64 md:h-72">
-                <canvas id="lineChart"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <!-- ASSET PANEL -->
-          <div class="bg-white/75 backdrop-blur-sm border border-beige rounded-2xl p-5 shadow-sm">
-            <h3 class="font-display font-bold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="briefcase" class="w-4 h-4 text-muted-gold"></i> Rincian Kekayaan</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <div class="asset-item"><span class="text-xs text-charcoal/50">Kas Dompet</span><span id="assetKas" class="font-mono font-semibold text-sm">Rp0</span></div>
-              <div class="asset-item"><span class="text-xs text-charcoal/50">E-Wallet</span><span id="assetEwallet" class="font-mono font-semibold text-sm">Rp0</span></div>
-              <div class="asset-item"><span class="text-xs text-charcoal/50">Utang</span><span id="assetUtang" class="font-mono font-semibold text-sm text-terracotta">Rp0</span></div>
-              <div class="asset-item"><span class="text-xs text-charcoal/50">Total Tabungan</span><span id="assetTabungan" class="font-mono font-semibold text-sm text-muted-gold">Rp0</span></div>
-              <div class="asset-item"><span class="text-xs text-charcoal/50">Dana Darurat</span><span id="assetDarurat" class="font-mono font-semibold text-sm text-sage-green">Rp0</span></div>
-              <div class="asset-item"><span class="text-xs text-charcoal/50">Target Darurat</span><span id="assetTargetDarurat" class="font-mono font-semibold text-sm">Rp0</span></div>
-            </div>
-          </div>
-
-          <!-- TIP -->
-          <div class="flex gap-3 items-start bg-muted-gold/5 border border-muted-gold/15 rounded-xl px-5 py-3.5">
-            <i data-lucide="info" class="w-5 h-5 text-muted-gold flex-shrink-0 mt-0.5"></i>
-            <p id="tipText" class="text-sm text-charcoal/70">Memuat tip...</p>
-          </div>
+        <div>
+          <h1 class="font-display font-bold text-lg text-deep-forest">gwcatat</h1>
+          <p class="text-xs text-charcoal/60">Semua uang punya cerita.</p>
         </div>
-
-        <!-- ======= TAB: PENDAPATAN ======= -->
-        <div id="tab-pendapatan" class="tab-content space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-up-circle" class="w-5 h-5 text-muted-gold"></i> Pendapatan</h2>
-            <button id="btnAddIncome" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pendapatan</button>
-          </div>
-          <div class="bg-white/50 border border-beige rounded-xl p-3 min-h-0">
-            <div class="relative w-full h-48 md:h-56">
-              <canvas id="incomeLineChart"></canvas>
-            </div>
-          </div>
-          <div id="incomeList" class="tx-list space-y-2">
-            <div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pendapatan bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pendapatan.</p></div>
-          </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-1 bg-warm-ivory border border-beige rounded-full pl-3 pr-1 py-1">
+          <button id="prevMonth" class="p-1 rounded-full hover:bg-black/5"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+          <span id="monthLabel" class="font-display font-semibold text-sm text-deep-forest min-w-[100px] text-center">Juli 2026</span>
+          <button id="nextMonth" class="p-1 rounded-full hover:bg-black/5"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
         </div>
-
-        <!-- ======= TAB: PENGELUARAN ======= -->
-        <div id="tab-pengeluaran" class="tab-content space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-down-circle" class="w-5 h-5 text-muted-gold"></i> Pengeluaran</h2>
-            <button id="btnAddExpense" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pengeluaran</button>
-          </div>
-          <div class="target-box flex flex-wrap items-center gap-3 bg-muted-gold/5 border border-muted-gold/15 rounded-xl px-4 py-3">
-            <label class="font-semibold text-sm text-deep-forest flex items-center gap-1.5"><i data-lucide="target" class="w-4 h-4 text-muted-gold"></i> Target Uang Jajan</label>
-            <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" class="flex-1 min-w-[100px] px-3 py-1.5 border border-beige rounded-lg bg-white/60 font-mono font-bold text-sm" />
-            <span class="text-xs text-charcoal/40">(panduan pengeluaran)</span>
-          </div>
-          <div class="bg-white/50 border border-beige rounded-xl p-3 min-h-0">
-            <div class="relative w-full h-48 md:h-56">
-              <canvas id="expenseLineChart"></canvas>
-            </div>
-          </div>
-          <div id="expenseList" class="tx-list space-y-2">
-            <div class="empty-state"><i data-lucide="wallet" class="w-8 h-8 text-charcoal/20"></i><p>Belum ada pengeluaran bulan ini.</p><p class="text-xs text-charcoal/30">Klik tombol Tambah Pengeluaran.</p></div>
-          </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span id="storageStatus" class="text-[11px] text-charcoal/50 px-2 py-1 bg-warm-ivory border border-beige rounded-full">Siap</span>
+          <button id="exportBtn" class="text-xs font-semibold px-3 py-1 rounded-full bg-deep-forest text-white shadow-sm hover:bg-deep-forest/90">Simpan</button>
+          <button id="importBtn" class="text-xs font-semibold px-3 py-1 border border-beige rounded-full bg-white hover:bg-gray-50">Muat</button>
+          <input type="file" id="importFileInput" accept=".txt" hidden />
         </div>
+      </div>
+    </header>
 
-        <!-- ======= TAB: LAPORAN ======= -->
-        <div id="tab-laporan" class="tab-content space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-5 h-5 text-muted-gold"></i> Laporan Keuangan</h2>
-          </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <label class="text-sm font-semibold text-deep-forest">Periode</label>
-            <select id="reportPeriod" class="px-3 py-1.5 border border-beige rounded-lg bg-white/60 text-sm">
-              <option value="minggu">Mingguan</option>
-              <option value="bulan" selected>Bulanan</option>
-              <option value="tahun">Tahunan</option>
-            </select>
-            <label class="text-sm font-semibold text-deep-forest">Tanggal</label>
-            <input type="date" id="reportDate" class="px-3 py-1.5 border border-beige rounded-lg bg-white/60 text-sm" />
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div class="report-stat"><div class="stat-label">Total Pendapatan</div><div id="repTotalIn" class="stat-value gold">Rp0</div></div>
-            <div class="report-stat"><div class="stat-label">Total Pengeluaran</div><div id="repTotalOut" class="stat-value red">Rp0</div></div>
-            <div class="report-stat"><div class="stat-label">Selisih</div><div id="repDiff" class="stat-value">Rp0</div></div>
-            <div class="report-stat"><div class="stat-label">Rata-rata Harian</div><div id="repAvg" class="stat-value">Rp0</div></div>
-            <div class="report-stat"><div class="stat-label">Transaksi</div><div id="repCount" class="stat-value">0</div></div>
-          </div>
-          <div class="bg-white/70 border border-beige rounded-2xl p-4 min-h-0">
-            <div class="relative w-full h-64 md:h-80">
-              <canvas id="reportChart"></canvas>
-            </div>
-          </div>
+    <!-- Tab: Beranda -->
+    <div id="tab-beranda" class="tab-content active space-y-5">
+      <!-- Ringkasan -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 shadow-sm">
+          <div class="text-xs text-charcoal/50">Pemasukan</div>
+          <div id="totalIn" class="font-mono font-bold text-lg">Rp0</div>
         </div>
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 shadow-sm">
+          <div class="text-xs text-charcoal/50">Pengeluaran</div>
+          <div id="totalOut" class="font-mono font-bold text-lg">Rp0</div>
+        </div>
+        <div class="bg-gradient-to-br from-muted-gold to-[#b8892e] text-white border border-muted-gold rounded-2xl px-4 py-3 shadow-sm">
+          <div class="text-xs text-white/70">Sisa di Tangan</div>
+          <div id="sisaSaldo" class="font-mono font-bold text-lg">Rp0</div>
+        </div>
+        <div class="bg-deep-forest text-white border border-deep-forest rounded-2xl px-4 py-3 shadow-sm">
+          <div class="text-xs text-white/60">Total Kekayaan</div>
+          <div id="totalWealth" class="font-mono font-bold text-lg">Rp0</div>
+        </div>
+      </div>
 
-        <!-- ======= FOOTER ======= -->
-        <p class="text-center text-xs text-charcoal/30 pt-6 border-t border-beige">
-          Data tersimpan di <strong class="text-deep-forest">storage.txt</strong> milikmu sendiri. Ganti bulan pakai panah di atas untuk lihat riwayat lain.
-          <br />gwcatat — catat hari ini, tenang nanti.
-        </p>
+      <!-- Grafik -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="pie-chart" class="w-4 h-4 text-muted-gold"></i> Perbandingan</h4>
+          <div class="relative w-full h-56"><canvas id="pieChart"></canvas></div>
+        </div>
+        <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+          <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="trending-up" class="w-4 h-4 text-muted-gold"></i> Tren Harian</h4>
+          <div class="relative w-full h-56"><canvas id="lineChart"></canvas></div>
+        </div>
+      </div>
 
-      </div><!-- end content-area -->
-    </div><!-- end app -->
-
-    <!-- ============================================================
-    POPUP DESKRIPSI
-    ============================================================ -->
-    <div id="popupOverlay" class="popup-overlay">
-      <div class="popup">
-        <button id="popupClose" class="close-popup">&times;</button>
-        <h3 id="popupTitle"><i data-lucide="info" class="w-5 h-5"></i> <span id="popupTitleText"></span></h3>
-        <p id="popupDescription"></p>
-        <button id="popupShortcut" class="shortcut-btn">Lihat di Pengeluaran</button>
+      <!-- Kalender -->
+      <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+        <h4 class="font-display font-semibold text-sm text-deep-forest flex items-center gap-2 mb-3"><i data-lucide="calendar" class="w-4 h-4 text-muted-gold"></i> Kalender</h4>
+        <div id="calendarContainer" class="grid grid-cols-7 gap-1 text-center"></div>
+        <div class="mt-3 text-xs text-charcoal/50 text-center" id="calendarSummary">Pilih tanggal untuk melihat detail</div>
       </div>
     </div>
 
-    <!-- ============================================================
-    MODAL TAMBAH PENDAPATAN
-    ============================================================ -->
-    <div id="modalIncome" class="modal-overlay">
-      <div class="modal">
-        <h3><i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Tambah Pendapatan</h3>
-        <div class="form-group"><label>Tanggal</label><input type="date" id="incomeDate" /></div>
-        <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="incomeAmount" placeholder="0" /></div>
-              <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="incomeNote" placeholder="Misal: gaji, kiriman orang tua" /></div>
-        <div class="modal-actions"><button id="modalIncomeCancel" class="btn-secondary">Batal</button><button id="modalIncomeSave" class="btn-primary">Simpan</button></div>
+    <!-- Tab: Pendapatan -->
+    <div id="tab-pendapatan" class="tab-content space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-up-circle" class="w-5 h-5 text-muted-gold"></i> Pendapatan</h2>
+        <button id="btnAddIncome" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pendapatan</button>
+      </div>
+      <div class="bg-white/50 border border-beige rounded-xl p-3">
+        <div class="relative w-full h-40"><canvas id="incomeLineChart"></canvas></div>
+      </div>
+      <div id="incomeList" class="tx-list space-y-2"></div>
+    </div>
+
+    <!-- Tab: Pengeluaran -->
+    <div id="tab-pengeluaran" class="tab-content space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="arrow-down-circle" class="w-5 h-5 text-muted-gold"></i> Pengeluaran</h2>
+        <button id="btnAddExpense" class="btn-add"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Pengeluaran</button>
+      </div>
+      <div class="target-box flex flex-wrap items-center gap-3 bg-muted-gold/5 border border-muted-gold/15 rounded-xl px-4 py-3">
+        <label class="font-semibold text-sm text-deep-forest flex items-center gap-1.5"><i data-lucide="target" class="w-4 h-4 text-muted-gold"></i> Target Uang Jajan</label>
+        <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" class="flex-1 min-w-[100px] px-3 py-1 border border-beige rounded-lg bg-white/60 font-mono font-bold text-sm" />
+        <span class="text-xs text-charcoal/40">(panduan)</span>
+      </div>
+      <div class="bg-white/50 border border-beige rounded-xl p-3">
+        <div class="relative w-full h-40"><canvas id="expenseLineChart"></canvas></div>
+      </div>
+      <div id="expenseList" class="tx-list space-y-2"></div>
+    </div>
+
+    <!-- Tab: Laporan -->
+    <div id="tab-laporan" class="tab-content space-y-4">
+      <h2 class="font-display font-bold text-xl text-deep-forest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-5 h-5 text-muted-gold"></i> Laporan Keuangan</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="text-sm font-semibold text-deep-forest">Periode</label>
+        <select id="reportPeriod" class="px-3 py-1.5 border border-beige rounded-lg bg-white text-sm">
+          <option value="minggu">Mingguan</option>
+          <option value="bulan" selected>Bulanan</option>
+          <option value="tahun">Tahunan</option>
+        </select>
+        <label class="text-sm font-semibold text-deep-forest">Tanggal</label>
+        <input type="date" id="reportDate" class="px-3 py-1.5 border border-beige rounded-lg bg-white text-sm" />
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Total Pendapatan</div><div id="repTotalIn" class="font-mono font-bold text-lg text-muted-gold">Rp0</div></div>
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Total Pengeluaran</div><div id="repTotalOut" class="font-mono font-bold text-lg text-terracotta">Rp0</div></div>
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Selisih</div><div id="repDiff" class="font-mono font-bold text-lg">Rp0</div></div>
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Rata-rata Harian</div><div id="repAvg" class="font-mono font-bold text-lg">Rp0</div></div>
+        <div class="bg-white border border-beige rounded-2xl px-4 py-3 text-center shadow-sm"><div class="text-xs text-charcoal/50">Transaksi</div><div id="repCount" class="font-mono font-bold text-lg">0</div></div>
+      </div>
+      <div class="bg-white border border-beige rounded-2xl p-4 shadow-sm">
+        <div class="relative w-full h-64"><canvas id="reportChart"></canvas></div>
       </div>
     </div>
 
-    <!-- ============================================================
-    MODAL TAMBAH PENGELUARAN
-    ============================================================ -->
-    <div id="modalExpense" class="modal-overlay">
-      <div class="modal">
-        <h3><i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Tambah Pengeluaran</h3>
-        <div class="form-group"><label>Tanggal</label><input type="date" id="expenseDate" /></div>
-        <div class="form-group"><label>Kategori</label>
-          <select id="expenseCategory">
-            <option value="kebutuhan">Kebutuhan</option>
-            <option value="keinginan">Keinginan</option>
-            <option value="tabungan">Tabungan</option>
-            <option value="darurat">Dana Darurat</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="expenseAmount" placeholder="0" /></div>
-        <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="expenseNote" placeholder="Misal: makan siang, ongkos" /></div>
-        <div class="modal-actions"><button id="modalExpenseCancel" class="btn-secondary">Batal</button><button id="modalExpenseSave" class="btn-primary">Simpan</button></div>
-      </div>
-    </div>
+  </div><!-- end content -->
+</div><!-- end app -->
 
-    <script type="module" src="/src/main.js"></script>
-  </body>
-</html>
+<!-- Modal Pendapatan -->
+<div id="modalIncome" class="modal-overlay">
+  <div class="modal">
+    <h3><i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Tambah Pendapatan</h3>
+    <div class="form-group"><label>Tanggal</label><input type="date" id="incomeDate" /></div>
+    <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="incomeAmount" placeholder="0" /></div>
+    <div class="form-group"><label>Catatan</label><input type="text" id="incomeNote" placeholder="Misal: gaji" /></div>
+    <div class="modal-actions"><button id="modalIncomeCancel" class="btn-secondary">Batal</button><button id="modalIncomeSave" class="btn-primary">Simpan</button></div>
+  </div>
+</div>
+
+<!-- Modal Pengeluaran -->
+<div id="modalExpense" class="modal-overlay">
+  <div class="modal">
+    <h3><i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Tambah Pengeluaran</h3>
+    <div class="form-group"><label>Tanggal</label><input type="date" id="expenseDate" /></div>
+    <div class="form-group"><label>Kategori</label><select id="expenseCategory"><option value="kebutuhan">Kebutuhan</option><option value="keinginan">Keinginan</option><option value="tabungan">Tabungan</option><option value="darurat">Dana Darurat</option></select></div>
+    <div class="form-group"><label>Nominal (Rp)</label><input type="text" inputmode="numeric" id="expenseAmount" placeholder="0" /></div>
+    <div class="form-group"><label>Catatan</label><input type="text" id="expenseNote" placeholder="Misal: makan siang" /></div>
+    <div class="modal-actions"><button id="modalExpenseCancel" class="btn-secondary">Batal</button><button id="modalExpenseSave" class="btn-primary">Simpan</button></div>
+  </div>
+</div>
+
+<!-- Popup Deskripsi -->
+<div id="popupOverlay" class="popup-overlay">
+  <div class="popup">
+    <button id="popupClose" class="close-popup">&times;</button>
+    <h3 id="popupTitle"><i data-lucide="info" class="w-5 h-5"></i> <span id="popupTitleText"></span></h3>
+    <p id="popupDescription"></p>
+    <button id="popupShortcut" class="shortcut-btn">Lihat Detail</button>
+  </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+  </html>
