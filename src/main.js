@@ -1,59 +1,81 @@
-// ============================================================
-// src/main.js — Dashboard Logic
-// ============================================================
+// src/main.js
 
 import { supabase } from './supabase.js'
 
-// Chart.js sudah tersedia global dari CDN, tidak perlu import
+// Chart.js sudah tersedia global dari CDN
+const Chart = window.Chart
 
-// ===== STATE =====
+// ============================================================
+// STATE
+// ============================================================
 let currentMonth = currentMonthKey()
 let transactions = []
 let chartInstances = { pie: null, line: null, income: null, expense: null, report: null }
 
-// ===== HELPERS =====
+// ============================================================
+// HELPERS
+// ============================================================
 function currentMonthKey() {
   const d = new Date()
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
 }
+
 function monthLabel(key) {
   const [y, m] = key.split('-').map(Number)
   return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
 }
+
 function fmtRp(n) {
   const v = Math.round(Number(n) || 0)
   return (v < 0 ? '-' : '') + 'Rp' + Math.abs(v).toLocaleString('id-ID')
 }
+
 function parseRibuan(v) {
   if (typeof v !== 'string') return Math.floor(Number(v) || 0)
   const d = v.replace(/[^0-9]/g, '')
   return d === '' ? 0 : parseInt(d, 10)
 }
-function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36) }
 
-// ===== SUPABASE =====
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
+}
+
+// ============================================================
+// SUPABASE CRUD
+// ============================================================
 async function fetchTransactions() {
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
     .order('date', { ascending: false })
-  if (error) { console.error(error); return [] }
+  if (error) {
+    console.error('fetchTransactions error:', error)
+    return []
+  }
   return data || []
 }
 
 async function addTransaction(tx) {
   const { error } = await supabase.from('transactions').insert([tx])
-  if (error) { console.error(error); return false }
+  if (error) {
+    console.error('addTransaction error:', error)
+    return false
+  }
   return true
 }
 
 async function deleteTransaction(id) {
   const { error } = await supabase.from('transactions').delete().eq('id', id)
-  if (error) { console.error(error); return false }
+  if (error) {
+    console.error('deleteTransaction error:', error)
+    return false
+  }
   return true
 }
 
-// ===== RENDER =====
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
 async function renderAll() {
   transactions = await fetchTransactions()
   const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth))
@@ -66,6 +88,7 @@ async function renderAll() {
   renderCalendar(monthTx)
   renderHealthIndicators(monthTx)
   updateReport(monthTx)
+
   if (typeof lucide !== 'undefined') lucide.createIcons()
 }
 
@@ -76,17 +99,25 @@ function renderSummary(tx) {
   const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0)
   const darurat = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0)
   const wealth = sisa + tabungan + darurat
+
   document.getElementById('totalIn').textContent = fmtRp(totalIn)
   document.getElementById('totalOut').textContent = fmtRp(totalOut)
   document.getElementById('sisaSaldo').textContent = fmtRp(sisa)
   document.getElementById('totalWealth').textContent = fmtRp(wealth)
 }
 
-// ===== CHARTS =====
-function safeDestroy(inst) { if (inst) { try { inst.destroy() } catch (e) { } } return null }
+// ============================================================
+// CHARTS
+// ============================================================
+function safeDestroy(inst) {
+  if (inst) {
+    try { inst.destroy() } catch (_) {}
+  }
+  return null
+}
 
 function renderCharts(tx) {
-  // Pie
+  // Pie chart
   const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
   const pieCtx = document.getElementById('pieChart')
@@ -99,12 +130,17 @@ function renderCharts(tx) {
           labels: ['Pendapatan', 'Pengeluaran'],
           datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#7A9E7E', '#C76D4E'] }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          cutout: '65%'
+        }
       })
     }
   }
 
-  // Line
+  // Line chart (gabungan)
   const days = {}
   tx.forEach(t => {
     if (t.date) {
@@ -127,18 +163,41 @@ function renderCharts(tx) {
         data: {
           labels,
           datasets: [
-            { label: 'Pendapatan', data: inData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
-            { label: 'Pengeluaran', data: outData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 2 }
+            {
+              label: 'Pendapatan',
+              data: inData,
+              borderColor: '#7A9E7E',
+              backgroundColor: 'rgba(122,158,126,0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 2
+            },
+            {
+              label: 'Pengeluaran',
+              data: outData,
+              borderColor: '#C76D4E',
+              backgroundColor: 'rgba(199,109,78,0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 2
+            }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true } }
+        }
       })
     }
   }
 
-  // Income line
+  // Income line (pendapatan)
   const incDays = {}
-  tx.filter(t => t.type === 'in').forEach(t => { if (t.date) { incDays[t.date] = (incDays[t.date] || 0) + Number(t.amount) } })
+  tx.filter(t => t.type === 'in').forEach(t => {
+    if (t.date) incDays[t.date] = (incDays[t.date] || 0) + Number(t.amount)
+  })
   const incDates = Object.keys(incDays).sort().slice(-31)
   const incLabels = incDates.map(d => d.slice(5))
   const incData = incDates.map(d => incDays[d] || 0)
@@ -148,15 +207,33 @@ function renderCharts(tx) {
     if (incLabels.length) {
       chartInstances.income = new Chart(incCtx, {
         type: 'line',
-        data: { labels: incLabels, datasets: [{ label: 'Pendapatan', data: incData, borderColor: '#7A9E7E', backgroundColor: 'rgba(122,158,126,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        data: {
+          labels: incLabels,
+          datasets: [{
+            label: 'Pendapatan',
+            data: incData,
+            borderColor: '#7A9E7E',
+            backgroundColor: 'rgba(122,158,126,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
       })
     }
   }
 
-  // Expense line
+  // Expense line (pengeluaran)
   const expDays = {}
-  tx.filter(t => t.type === 'out').forEach(t => { if (t.date) { expDays[t.date] = (expDays[t.date] || 0) + Number(t.amount) } })
+  tx.filter(t => t.type === 'out').forEach(t => {
+    if (t.date) expDays[t.date] = (expDays[t.date] || 0) + Number(t.amount)
+  })
   const expDates = Object.keys(expDays).sort().slice(-31)
   const expLabels = expDates.map(d => d.slice(5))
   const expData = expDates.map(d => expDays[d] || 0)
@@ -166,18 +243,39 @@ function renderCharts(tx) {
     if (expLabels.length) {
       chartInstances.expense = new Chart(expCtx, {
         type: 'line',
-        data: { labels: expLabels, datasets: [{ label: 'Pengeluaran', data: expData, borderColor: '#C76D4E', backgroundColor: 'rgba(199,109,78,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        data: {
+          labels: expLabels,
+          datasets: [{
+            label: 'Pengeluaran',
+            data: expData,
+            borderColor: '#C76D4E',
+            backgroundColor: 'rgba(199,109,78,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
       })
     }
   }
 }
 
-// ===== LISTS =====
+// ============================================================
+// LISTS (Income & Expense)
+// ============================================================
 function renderIncomeList(tx) {
   const list = document.getElementById('incomeList')
   const items = tx.filter(t => t.type === 'in')
-  if (!items.length) { list.innerHTML = '<div class="empty-state">Belum ada pendapatan</div>'; return }
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state">Belum ada pendapatan</div>'
+    return
+  }
   list.innerHTML = items.map(t => `
     <div class="tx-item">
       <div class="tx-icon bg-sage-green/10"><i data-lucide="wallet" class="w-4 h-4 text-sage-green"></i></div>
@@ -187,7 +285,7 @@ function renderIncomeList(tx) {
     </div>
   `).join('')
   list.querySelectorAll('.tx-delete').forEach(btn => {
-    btn.addEventListener('click', async function () {
+    btn.addEventListener('click', async function() {
       const id = this.dataset.id
       await deleteTransaction(id)
       renderAll()
@@ -199,7 +297,10 @@ function renderIncomeList(tx) {
 function renderExpenseList(tx) {
   const list = document.getElementById('expenseList')
   const items = tx.filter(t => t.type === 'out')
-  if (!items.length) { list.innerHTML = '<div class="empty-state">Belum ada pengeluaran</div>'; return }
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state">Belum ada pengeluaran</div>'
+    return
+  }
   list.innerHTML = items.map(t => `
     <div class="tx-item">
       <div class="tx-icon bg-terracotta/10"><i data-lucide="shopping-bag" class="w-4 h-4 text-terracotta"></i></div>
@@ -209,7 +310,7 @@ function renderExpenseList(tx) {
     </div>
   `).join('')
   list.querySelectorAll('.tx-delete').forEach(btn => {
-    btn.addEventListener('click', async function () {
+    btn.addEventListener('click', async function() {
       const id = this.dataset.id
       await deleteTransaction(id)
       renderAll()
@@ -218,7 +319,9 @@ function renderExpenseList(tx) {
   if (typeof lucide !== 'undefined') lucide.createIcons()
 }
 
-// ===== CALENDAR =====
+// ============================================================
+// CALENDAR
+// ============================================================
 function renderCalendar(tx) {
   const container = document.getElementById('calendarContainer')
   const [year, month] = currentMonth.split('-').map(Number)
@@ -240,7 +343,7 @@ function renderCalendar(tx) {
   }
   container.innerHTML = html
   container.querySelectorAll('.calendar-day.has-transaction').forEach(el => {
-    el.addEventListener('click', function () {
+    el.addEventListener('click', function() {
       const date = this.dataset.date
       const dayTx = tx.filter(t => t.date === date)
       const totalIn = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
@@ -250,7 +353,9 @@ function renderCalendar(tx) {
   })
 }
 
-// ===== HEALTH INDICATORS =====
+// ============================================================
+// HEALTH INDICATORS
+// ============================================================
 function renderHealthIndicators(tx) {
   const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
   const base = totalIn || 1
@@ -275,7 +380,7 @@ function renderHealthIndicators(tx) {
   document.getElementById('lifestyleBadge').textContent = ls.label
   document.getElementById('lifestyleBadge').className = 'badge ' + (ls.label === 'Bahaya' ? 'danger' : ls.label === 'Waspada' ? 'warn' : '')
 
-  // Liquid (dummy)
+  // Liquid (placeholder)
   document.getElementById('liquidBadge').textContent = 'Aman'
   document.getElementById('liquidBadge').className = 'badge'
 
@@ -295,13 +400,16 @@ function renderHealthIndicators(tx) {
   document.getElementById('literacyTitle').textContent = titles[level - 1] + ' · ' + Math.round(score) + '/100'
 }
 
-// ===== REPORT =====
+// ============================================================
+// REPORT
+// ============================================================
 function updateReport(tx) {
   const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
   const diff = totalIn - totalOut
   const count = tx.length
   const avg = count ? (totalIn + totalOut) / 30 : 0
+
   document.getElementById('repTotalIn').textContent = fmtRp(totalIn)
   document.getElementById('repTotalOut').textContent = fmtRp(totalOut)
   document.getElementById('repDiff').textContent = fmtRp(diff)
@@ -309,7 +417,7 @@ function updateReport(tx) {
   document.getElementById('repAvg').textContent = fmtRp(avg)
   document.getElementById('repCount').textContent = count
 
-  // Report chart
+  // Report bar chart
   const days = {}
   tx.forEach(t => {
     if (t.date) {
@@ -322,6 +430,7 @@ function updateReport(tx) {
   const labels = dates.map(d => d.slice(5))
   const inData = dates.map(d => days[d].in || 0)
   const outData = dates.map(d => days[d].out || 0)
+
   const ctx = document.getElementById('reportChart')
   if (ctx) {
     chartInstances.report = safeDestroy(chartInstances.report)
@@ -331,17 +440,36 @@ function updateReport(tx) {
         data: {
           labels,
           datasets: [
-            { label: 'Pendapatan', data: inData, backgroundColor: 'rgba(122,158,126,0.6)', borderColor: '#7A9E7E', borderWidth: 1 },
-            { label: 'Pengeluaran', data: outData, backgroundColor: 'rgba(199,109,78,0.6)', borderColor: '#C76D4E', borderWidth: 1 }
+            {
+              label: 'Pendapatan',
+              data: inData,
+              backgroundColor: 'rgba(122,158,126,0.6)',
+              borderColor: '#7A9E7E',
+              borderWidth: 1
+            },
+            {
+              label: 'Pengeluaran',
+              data: outData,
+              backgroundColor: 'rgba(199,109,78,0.6)',
+              borderColor: '#C76D4E',
+              borderWidth: 1
+            }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true } }
+        }
       })
     }
   }
 }
 
-// ===== EVENT LISTENERS =====
+// ============================================================
+// SETUP FUNCTIONS
+// ============================================================
 function setupNavigation() {
   const navBtns = document.querySelectorAll('.nav-btn')
   const toggleBtn = document.getElementById('sidebarToggle')
@@ -358,7 +486,7 @@ function setupNavigation() {
   })
 
   navBtns.forEach(btn => {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function() {
       navBtns.forEach(b => b.classList.remove('active'))
       this.classList.add('active')
       const tab = this.dataset.tab
@@ -385,6 +513,7 @@ function setupProfile() {
   })
   document.addEventListener('click', () => dropdown.classList.add('hidden'))
 
+  // Update UI berdasarkan session
   supabase.auth.getSession().then(({ data }) => {
     const user = data.session?.user
     if (user) {
@@ -411,7 +540,7 @@ function setupForm() {
   const amountInput = document.getElementById('txAmount')
   dateInput.value = new Date().toISOString().slice(0, 10)
 
-  amountInput.addEventListener('input', function () {
+  amountInput.addEventListener('input', function() {
     const val = this.value.replace(/[^0-9]/g, '')
     if (val) this.value = Number(val).toLocaleString('id-ID')
   })
@@ -420,7 +549,10 @@ function setupForm() {
     const date = dateInput.value
     const description = descInput.value.trim() || (type === 'in' ? 'Pendapatan' : 'Pengeluaran')
     const amount = parseRibuan(amountInput.value)
-    if (!date || !amount) { alert('Isi tanggal dan nominal'); return }
+    if (!date || !amount) {
+      alert('Isi tanggal dan nominal')
+      return
+    }
     const user = await supabase.auth.getUser()
     const tx = {
       id: uid(),
@@ -487,10 +619,15 @@ function setupPopup() {
     if (typeof lucide !== 'undefined') lucide.createIcons()
   }
 
-  function closePopup() { overlay.classList.remove('open'); currentKey = null }
+  function closePopup() {
+    overlay.classList.remove('open')
+    currentKey = null
+  }
 
   closeBtn.addEventListener('click', closePopup)
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup() })
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closePopup()
+  })
   shortcutBtn.addEventListener('click', () => {
     const data = dataMap[currentKey]
     if (!data) return
@@ -501,15 +638,24 @@ function setupPopup() {
   })
 
   document.querySelectorAll('[data-popup]').forEach(el => {
-    el.addEventListener('click', function () {
+    el.addEventListener('click', function() {
       const key = this.dataset.popup
       openPopup(key)
     })
   })
 }
 
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
+// ============================================================
+// CEK SESSION & START APP
+// ============================================================
+// Ini yang paling penting: cek session sebelum menjalankan apapun
+supabase.auth.getSession().then(({ data }) => {
+  if (!data.session) {
+    // Belum login → redirect ke halaman login
+    window.location.href = '/login.html'
+    return
+  }
+  // Sudah login → jalankan aplikasi
   setupNavigation()
   setupProfile()
   setupForm()
