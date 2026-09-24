@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login — gwcatat</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Sign-In Script -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -66,10 +68,66 @@
       <div id="registerError" class="text-sm text-red-500 hidden"></div>
     </form>
 
+    <!-- Divider -->
+    <div class="mt-6 flex items-center justify-between">
+      <span class="border-b w-1/5 border-[#2D2D2D]/10 lg:w-1/4"></span>
+      <span class="text-xs text-center text-[#2D2D2D]/50 uppercase font-semibold">Atau masuk dengan</span>
+      <span class="border-b w-1/5 border-[#2D2D2D]/10 lg:w-1/4"></span>
+    </div>
+
+    <!-- Google Sign-In Button Container -->
+    <div class="mt-6 flex justify-center">
+      <div id="g_id_onload"
+           data-client_id="697552116251-rf9bhqg0taqhstef2kko3t9b4eke1lr5.apps.googleusercontent.com"
+           data-context="use"
+           data-ux_mode="popup"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
+    </div>
+
     <p class="text-center text-xs text-[#2D2D2D]/40 mt-6">Dengan melanjutkan, kamu setuju dengan Kebijakan Privasi kami.</p>
   </div>
 
   <script>
+    // ===== GOOGLE LOGIN LOGIC =====
+    function parseJwt(token) {
+      var base64Url = token.split('.')[1];
+      var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    function handleCredentialResponse(response) {
+      // Decode response credential (JWT)
+      const data = parseJwt(response.credential);
+      const email = data.email;
+      const name = data.name;
+
+      // Simpan user jika belum ada (opsional, karena login pakai google)
+      const users = JSON.parse(localStorage.getItem('gwcatat_users') || '[]');
+      if (!users.find(u => u.email === email)) {
+        users.push({ name: name, email: email, password: 'google_oauth_user' });
+        localStorage.setItem('gwcatat_users', JSON.stringify(users));
+      }
+
+      // Buat sesi login
+      localStorage.setItem('gwcatat_session', JSON.stringify({ email: email, name: name }));
+      
+      // Arahkan ke halaman utama
+      window.location.href = '/index.html';
+    }
+
     // ===== LOGIC =====
     const formLogin = document.getElementById('formLogin')
     const formRegister = document.getElementById('formRegister')
