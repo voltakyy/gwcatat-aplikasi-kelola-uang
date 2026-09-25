@@ -131,8 +131,12 @@ modalClose.addEventListener('click', closeModal)
 modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal() })
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && modalOverlay.classList.contains('open')) {
-    modalSubmit.click();
+  if (e.key === 'Enter') {
+    const isModalOpen = modalOverlay && modalOverlay.classList.contains('open');
+    if (isModalOpen) {
+      e.preventDefault();
+      modalSubmit.click();
+    }
   }
 });
 
