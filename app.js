@@ -242,7 +242,7 @@ function renderCharts(tx) {
       chartInstances.income = new Chart(incCtx, {
         type: 'line',
         data: { labels: incLabels, datasets: [{ label: 'Pendapatan', data: incData, borderColor: '#5a9367', backgroundColor: 'rgba(90,147,103,0.1)', fill: true, tension: 0.4, pointRadius: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtRp(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 12 } } }, animation: { duration: 300 } }
       })
     }
   }
@@ -260,7 +260,7 @@ function renderCharts(tx) {
       chartInstances.expense = new Chart(expCtx, {
         type: 'bar',
         data: { labels: expLabels, datasets: [{ label: 'Pengeluaran', data: expData, backgroundColor: 'rgba(192,96,74,0.65)', borderColor: '#c0604a', borderWidth: 1, borderRadius: 4 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtRp(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 12 } } }, animation: { duration: 300 } }
       })
     }
   }
