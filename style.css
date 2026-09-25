@@ -2,7 +2,7 @@
    GWCATAT — Global Styles
    ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,7 +23,7 @@
 }
 
 body {
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -109,7 +109,7 @@ body {
 .summary-card.gold { background: linear-gradient(135deg, #d4a843, #b8892e); color: #fff; border: none; }
 .summary-card.dark { background: var(--teal); color: #fff; border: none; }
 .summary-card .label { font-size: 11px; font-weight: 600; opacity: .65; margin-bottom: 4px; }
-.summary-card .value { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 400; letter-spacing: 0.8px; }
+.summary-card .value { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 400; letter-spacing: 0.8px; }
 
 /* ---- Tab content ---- */
 .tab-content { display: none; }
@@ -145,7 +145,7 @@ body {
 .tx-info { flex: 1; min-width: 0; }
 .tx-info .tx-desc { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tx-info .tx-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.tx-amount { font-family: 'Manrope', sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 0.6px; }
+.tx-amount { font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 0.6px; }
 .tx-amount.in { color: var(--green); }
 .tx-amount.out { color: var(--red); }
 .tx-del {
@@ -219,7 +219,7 @@ body {
   width: 50px; height: 50px; border-radius: 50%;
   background: var(--surface); border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 400; letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 400; letter-spacing: 0.5px;
 }
 .tank {
   width: 36px; height: 58px; border-radius: 7px;
@@ -230,7 +230,7 @@ body {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: linear-gradient(180deg, rgba(90,147,103,0.6), #5a9367);
   transition: height .7s ease;
-  font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 400;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 400;
   display: flex; align-items: center; justify-content: center; color: #fff;
 }
 .health-label { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
@@ -258,7 +258,7 @@ body {
   border-bottom: 1px dashed var(--border);
 }
 .health-stat-value {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 34px;
   font-weight: 400;
   letter-spacing: 1px;
@@ -291,7 +291,7 @@ body {
   gap: 6px;
 }
 .health-formula {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 15px;
   font-weight: 400;
   letter-spacing: 0.6px;
@@ -342,7 +342,7 @@ body {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; margin: 0 auto 6px; box-shadow: var(--shadow);
 }
-.level-box .lv { font-family: 'Manrope', sans-serif; font-size: 19px; font-weight: 400; letter-spacing: 0.5px; }
+.level-box .lv { font-family: 'Poppins', sans-serif; font-size: 19px; font-weight: 400; letter-spacing: 0.5px; }
 .xp-bar { width: 40px; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; margin-top: 5px; }
 .xp-fill { height: 100%; background: var(--gold); border-radius: 2px; }
 
@@ -355,7 +355,7 @@ body {
   box-shadow: var(--shadow);
 }
 .rstat .rl { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
-.rstat .rv { font-family: 'Manrope', sans-serif; font-size: 21px; font-weight: 400; letter-spacing: 0.8px; }
+.rstat .rv { font-family: 'Poppins', sans-serif; font-size: 21px; font-weight: 400; letter-spacing: 0.8px; }
 
 /* ---- Section title ---- */
 .section-title {
@@ -397,7 +397,7 @@ body {
   color: var(--text); background: var(--bg); outline: none; transition: border-color .15s;
 }
 .form-input:focus { border-color: var(--teal); background: var(--surface); }
-.form-input.mono { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 400; letter-spacing: 0.8px; }
+.form-input.mono { font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 400; letter-spacing: 0.8px; }
 .modal-submit {
   width: 100%; padding: 12px; border: none; border-radius: 10px;
   font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px;
@@ -417,13 +417,13 @@ body {
 .allowance-bar input {
   flex: 1; min-width: 100px; background: var(--surface);
   border: 1.5px solid var(--border); border-radius: 8px;
-  padding: 7px 12px; font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 400; letter-spacing: 0.8px;
+  padding: 7px 12px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 400; letter-spacing: 0.8px;
   color: var(--text); outline: none;
 }
 
 /* Utility Mono Class */
 .mono {
-  font-family: 'Manrope', sans-serif !important;
+  font-family: 'Poppins', sans-serif !important;
   letter-spacing: 0.6px;
 }
 
