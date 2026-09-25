@@ -2,7 +2,7 @@
    GWCATAT — Global Styles
    ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -109,7 +109,7 @@ body {
 .summary-card.gold { background: linear-gradient(135deg, #d4a843, #b8892e); color: #fff; border: none; }
 .summary-card.dark { background: var(--teal); color: #fff; border: none; }
 .summary-card .label { font-size: 11px; font-weight: 600; opacity: .65; margin-bottom: 4px; }
-.summary-card .value { font-family: 'DM Mono', monospace; font-size: 17px; font-weight: 500; }
+.summary-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 24px; font-weight: 400; letter-spacing: 0.8px; }
 
 /* ---- Tab content ---- */
 .tab-content { display: none; }
@@ -145,7 +145,7 @@ body {
 .tx-info { flex: 1; min-width: 0; }
 .tx-info .tx-desc { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tx-info .tx-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.tx-amount { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+.tx-amount { font-family: 'Bebas Neue', sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 0.6px; }
 .tx-amount.in { color: var(--green); }
 .tx-amount.out { color: var(--red); }
 .tx-del {
@@ -210,6 +210,30 @@ body {
   color: var(--gold);
   opacity: 1;
 }
+.ring {
+  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: conic-gradient(#5a9367 0deg, #e8e4de 0deg);
+}
+.ring-inner {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px; font-weight: 400; letter-spacing: 0.5px;
+}
+.tank {
+  width: 36px; height: 58px; border-radius: 7px;
+  background: var(--bg); border: 1px solid var(--border);
+  overflow: hidden; position: relative; margin: 0 auto 6px;
+}
+.tank-fill {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(180deg, rgba(90,147,103,0.6), #5a9367);
+  transition: height .7s ease;
+  font-family: 'Bebas Neue', sans-serif; font-size: 13px; font-weight: 400;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+}
+.health-label { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
 .badge {
   display: inline-block; font-size: 9px; font-weight: 700;
   padding: 2px 8px; border-radius: 50px;
@@ -234,9 +258,10 @@ body {
   border-bottom: 1px dashed var(--border);
 }
 .health-stat-value {
-  font-family: 'DM Mono', monospace;
-  font-size: 26px;
-  font-weight: 700;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: 1px;
   color: var(--teal);
   line-height: 1;
   flex-shrink: 0;
@@ -266,9 +291,10 @@ body {
   gap: 6px;
 }
 .health-formula {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.6px;
   color: var(--teal);
   background: var(--surface);
   padding: 6px 10px;
@@ -316,7 +342,7 @@ body {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; margin: 0 auto 6px; box-shadow: var(--shadow);
 }
-.level-box .lv { font-size: 15px; font-weight: 800; }
+.level-box .lv { font-family: 'Bebas Neue', sans-serif; font-size: 19px; font-weight: 400; letter-spacing: 0.5px; }
 .xp-bar { width: 40px; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; margin-top: 5px; }
 .xp-fill { height: 100%; background: var(--gold); border-radius: 2px; }
 
@@ -329,7 +355,7 @@ body {
   box-shadow: var(--shadow);
 }
 .rstat .rl { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
-.rstat .rv { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; }
+.rstat .rv { font-family: 'Bebas Neue', sans-serif; font-size: 21px; font-weight: 400; letter-spacing: 0.8px; }
 
 /* ---- Section title ---- */
 .section-title {
@@ -371,7 +397,7 @@ body {
   color: var(--text); background: var(--bg); outline: none; transition: border-color .15s;
 }
 .form-input:focus { border-color: var(--teal); background: var(--surface); }
-.form-input.mono { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; }
+.form-input.mono { font-family: 'Bebas Neue', sans-serif; font-size: 20px; font-weight: 400; letter-spacing: 0.8px; }
 .modal-submit {
   width: 100%; padding: 12px; border: none; border-radius: 10px;
   font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px;
@@ -391,8 +417,14 @@ body {
 .allowance-bar input {
   flex: 1; min-width: 100px; background: var(--surface);
   border: 1.5px solid var(--border); border-radius: 8px;
-  padding: 7px 12px; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+  padding: 7px 12px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; font-weight: 400; letter-spacing: 0.8px;
   color: var(--text); outline: none;
+}
+
+/* Utility Mono Class */
+.mono {
+  font-family: 'Bebas Neue', sans-serif !important;
+  letter-spacing: 0.6px;
 }
 
 /* ---- Tabs sub / report filter ---- */

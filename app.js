@@ -218,7 +218,7 @@ function renderCharts(tx) {
             { label: 'Pengeluaran', data: outData, borderColor: '#c0604a', backgroundColor: 'rgba(192,96,74,0.08)', fill: true, tension: 0.4, pointRadius: 2 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { family: 'DM Mono', size: 10 } } }, x: { ticks: { font: { family: 'DM Mono', size: 10 } } } }, animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { family: 'Bebas Neue', size: 12 } } }, x: { ticks: { font: { family: 'Bebas Neue', size: 12 } } } }, animation: { duration: 300 } }
       })
     }
   }
