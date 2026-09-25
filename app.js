@@ -8,11 +8,10 @@ if (!session) {
   window.location.href = 'login.html';
 }
 
-
 // ===== LOGOUT =====
-document.getElementById('logoutBtn').addEventListener('click', () => {
+document.getElementById('logoutBtn')?.addEventListener('click', () => {
   localStorage.removeItem('gwcatat_session')
-  window.location.href = '/login.html'
+  window.location.href = 'login.html'
 })
 
 // ===== STATE =====
@@ -42,6 +41,7 @@ function saveData() { localStorage.setItem('gwcatat_transactions', JSON.stringif
 function safeDestroy(inst) { if (inst) { try { inst.destroy() } catch (e) {} } return null }
 
 function formatAmountInput(el) {
+  if (!el) return;
   el.addEventListener('input', function () {
     const raw = this.value.replace(/[^0-9]/g, '')
     this.value = raw ? Number(raw).toLocaleString('id-ID') : ''
@@ -85,7 +85,6 @@ const modalDesc    = document.getElementById('modalDesc')
 const modalAmount  = document.getElementById('modalAmount')
 const modalClose   = document.getElementById('modalClose')
 const modalCategory= document.getElementById('modalCategory')
-const categoryWrap = document.getElementById('categoryWrap')
 
 if (modalAmount) formatAmountInput(modalAmount)
 
@@ -169,23 +168,22 @@ if (modalSubmit) {
   })
 }
 
-// Initialize buttons only if they exist
+// Initialize buttons
 const btnIncome = document.getElementById('btnIncome');
 if (btnIncome) btnIncome.addEventListener('click', () => openModal('in'));
-
 const btnExpense = document.getElementById('btnExpense');
 if (btnExpense) btnExpense.addEventListener('click', () => openModal('out'));
-
 const btnIncomeTab = document.getElementById('btnIncomeTab');
 if (btnIncomeTab) btnIncomeTab.addEventListener('click', () => openModal('in'));
-
 const btnExpenseTab = document.getElementById('btnExpenseTab');
 if (btnExpenseTab) btnExpenseTab.addEventListener('click', () => openModal('out'));
 
 // ===== RENDER ALL =====
 function renderAll() {
   const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth))
-  document.getElementById('monthLabel').textContent = monthLabel(currentMonth)
+  const labelEl = document.getElementById('monthLabel');
+  if (labelEl) labelEl.textContent = monthLabel(currentMonth)
+
   renderSummary(monthTx)
   renderCharts(monthTx)
   renderIncomeList(monthTx)
@@ -200,10 +198,15 @@ function renderSummary(tx) {
   const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
   const sisa     = totalIn - totalOut
-  document.getElementById('totalIn').textContent    = fmtRp(totalIn)
-  document.getElementById('totalOut').textContent   = fmtRp(totalOut)
-  document.getElementById('sisaSaldo').textContent  = fmtRp(sisa)
-  document.getElementById('totalWealth').textContent = fmtRp(sisa)
+
+  const elIn = document.getElementById('totalIn');
+  if (elIn) elIn.textContent = fmtRp(totalIn);
+  const elOut = document.getElementById('totalOut');
+  if (elOut) elOut.textContent = fmtRp(totalOut);
+  const elSisa = document.getElementById('sisaSaldo');
+  if (elSisa) elSisa.textContent = fmtRp(sisa);
+  const elWealth = document.getElementById('totalWealth');
+  if (elWealth) elWealth.textContent = fmtRp(sisa);
 }
 
 // ===== CHARTS =====
@@ -211,7 +214,6 @@ function renderCharts(tx) {
   const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
 
-  // Doughnut
   const pieCtx = document.getElementById('pieChart')
   if (pieCtx) {
     chartInstances.pie = safeDestroy(chartInstances.pie)
@@ -224,7 +226,6 @@ function renderCharts(tx) {
     }
   }
 
-  // Line - daily trend
   const days = {}
   tx.forEach(t => {
     if (t.date) {
@@ -256,7 +257,6 @@ function renderCharts(tx) {
     }
   }
 
-  // Income line (tab pendapatan)
   const incDays  = {}
   tx.filter(t => t.type === 'in').forEach(t => { if (t.date) incDays[t.date] = (incDays[t.date] || 0) + Number(t.amount) })
   const incDates  = Object.keys(incDays).sort().slice(-31)
@@ -274,7 +274,6 @@ function renderCharts(tx) {
     }
   }
 
-  // Expense line (tab pengeluaran)
   const expDays  = {}
   tx.filter(t => t.type === 'out').forEach(t => { if (t.date) expDays[t.date] = (expDays[t.date] || 0) + Number(t.amount) })
   const expDates  = Object.keys(expDays).sort().slice(-31)
@@ -321,6 +320,7 @@ function bindDeleteButtons() {
 
 function renderIncomeList(tx) {
   const list  = document.getElementById('incomeList')
+  if (!list) return;
   const items = tx.filter(t => t.type === 'in').sort((a, b) => b.date.localeCompare(a.date))
   if (!items.length) { list.innerHTML = '<div class="empty-state">Belum ada pendapatan bulan ini.</div>'; return }
   list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>'
@@ -329,6 +329,7 @@ function renderIncomeList(tx) {
 
 function renderExpenseList(tx) {
   const list  = document.getElementById('expenseList')
+  if (!list) return;
   const items = tx.filter(t => t.type === 'out').sort((a, b) => b.date.localeCompare(a.date))
   if (!items.length) { list.innerHTML = '<div class="empty-state">Belum ada pengeluaran bulan ini.</div>'; return }
   list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>'
@@ -338,6 +339,7 @@ function renderExpenseList(tx) {
 // ===== CALENDAR =====
 function renderCalendar(tx) {
   const container = document.getElementById('calendarContainer')
+  if (!container) return;
   const [year, month] = currentMonth.split('-').map(Number)
   const firstDay     = new Date(year, month - 1, 1).getDay()
   const daysInMonth  = new Date(year, month, 0).getDate()
@@ -365,8 +367,8 @@ function renderCalendar(tx) {
       const dayTx = tx.filter(t => t.date === date)
       const tIn   = dayTx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
       const tOut  = dayTx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
-      document.getElementById('calendarSummary').textContent =
-        `${date} — Masuk: ${fmtRp(tIn)} · Keluar: ${fmtRp(tOut)}`
+      const sumEl = document.getElementById('calendarSummary');
+      if (sumEl) sumEl.textContent = `${date} — Masuk: ${fmtRp(tIn)} · Keluar: ${fmtRp(tOut)}`
     })
   })
 }
@@ -375,18 +377,15 @@ let currentCalculatedHealth = null;
 
 // ===== HEALTH INDICATORS =====
 function renderHealthIndicators(tx) {
-  // Calculate base incomes and expenses
   const totalIncome = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
   const totalExpense = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
-  const base = totalIncome || 1; // avoid division by zero
+  const base = totalIncome || 1;
 
-  // Category totals
   const tabunganAmt = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0);
   const keinginanAmt = tx.filter(t => t.type === 'out' && t.category === 'keinginan').reduce((s, t) => s + Number(t.amount), 0);
   const daruratAmt   = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0);
-  const cashEwallet  = totalIncome - totalExpense; // liquid cash
+  const cashEwallet  = totalIncome - totalExpense;
 
-  // 1️⃣ Savings Ratio
   const savingsRatio = (tabunganAmt / base) * 100;
   const sv = savingsRatio >= 20 ? {color: '#5a9367', label: 'Sehat'}
            : savingsRatio >= 10 ? {color: '#C89B3C', label: 'Kurang'}
@@ -396,7 +395,6 @@ function renderHealthIndicators(tx) {
   if (savValEl) savValEl.textContent = Math.round(savingsRatio) + '%';
   setBadge('savingsBadge', sv.label, sv.color);
 
-  // 2️⃣ Lifestyle Ratio
   const lifestyleRatio = (keinginanAmt / base) * 100;
   const ls = lifestyleRatio <= 30 ? {color: '#5a9367', label: 'Terkendali'}
            : lifestyleRatio <= 45 ? {color: '#C89B3C', label: 'Waspada'}
@@ -406,7 +404,6 @@ function renderHealthIndicators(tx) {
   if (lifeValEl) lifeValEl.textContent = Math.round(lifestyleRatio) + '%';
   setBadge('lifestyleBadge', ls.label, ls.color);
 
-  // 3️⃣ Liquidity Ratio
   const liquidityMonths = totalExpense > 0 ? (cashEwallet / totalExpense) : (cashEwallet >= 0 ? 6 : 0);
   const liq = liquidityMonths >= 3 ? {color: '#5a9367', label: 'Aman'}
             : liquidityMonths >= 1 ? {color: '#C89B3C', label: 'Rawan'}
@@ -419,7 +416,6 @@ function renderHealthIndicators(tx) {
   }
   setBadge('liquidBadge', liq.label, liq.color);
 
-  // 4️⃣ Emergency Fund Ratio
   const targetEmergency = (totalExpense || 1) * 6;
   const emergencyRatio = (daruratAmt / targetEmergency) * 100;
   const em = emergencyRatio >= 100 ? {color: '#5a9367', label: 'Terpenuhi'}
@@ -430,7 +426,6 @@ function renderHealthIndicators(tx) {
   if (emValEl) emValEl.textContent = Math.round(emergencyRatio) + '%';
   setBadge('emergencyBadge', em.label, em.color);
 
-  // 5️⃣ Financial Literacy Score
   const scoreSavings = Math.min(100, Math.max(0, (savingsRatio / 20) * 100));
   const scoreLifestyle = lifestyleRatio <= 30 ? 100 : Math.max(0, 100 - (lifestyleRatio - 30) * 3);
   const scoreLiquidity = Math.min(100, Math.max(0, (liquidityMonths / 3) * 100));
@@ -447,73 +442,53 @@ function renderHealthIndicators(tx) {
   const litTitleEl = document.getElementById('literacyTitle');
   if (litTitleEl) litTitleEl.textContent = levels[levelIdx] + ' · ' + Math.round(literacyScore) + '/100';
 
-  // Store state for modal pop-ups
-  currentCalculatedHealth = {
-    savingsRatio, sv,
-    lifestyleRatio, ls,
-    liquidityMonths, liq,
-    emergencyRatio, em,
-    literacyScore, levelIdx, levels
-  };
+  currentCalculatedHealth = { savingsRatio, sv, lifestyleRatio, ls, liquidityMonths, liq, emergencyRatio, em, literacyScore, levelIdx, levels };
 }
 
-// ------- Clickable Cards & Pop-up Modal -------
 const popInfo = {
   savings: {
     title: "1. Rasio Tabungan (Savings Ratio)",
     getVal: (r) => `${Math.round(r.savingsRatio)}%`,
     badgeText: (r) => r.sv.label,
     badgeColor: (r) => r.sv.color,
-    desc: "Tabungan lo tuh bahan bakar masa depan. Minimal 20% dari uang jajan bulanan wajib disisihkan. Kurang dari 10%? Bahaya, lo hidup paycheck-to-paycheck.",
+    desc: "Tabungan lo tuh bahan bakar masa depan. Minimal 20% dari uang jajan bulanan wajib disisihkan.",
     formula: "Tabungan Bulanan / Pendapatan × 100%",
     thresholds: [
       { text: "≥ 20% — Sehat", color: "#5a9367" },
       { text: "10% – 19% — Kurang", color: "#C89B3C" },
       { text: "< 10% — Bahaya", color: "#c0604a" }
     ],
-    refs: [
-      "50/30/20 Rule — Elizabeth Warren & Amelia Warren Tyagi, buku All Your Worth (2005): 20% untuk tabungan & investasi",
-      "Ligwina Hananto (QM Financial): Rasio menabung minimal 10% dari penghasilan",
-      "CFP Board: Savings Rate target 10–20% dari gross income"
-    ],
-    tab: 'pengeluaran', category: 'tabungan', btnText: "Ke Tab Pengeluaran (Kategori Tabungan)"
+    refs: ["50/30/20 Rule", "CFP Board"],
+    tab: 'pengeluaran', category: 'tabungan', btnText: "Ke Tab Pengeluaran (Tabungan)"
   },
   lifestyle: {
     title: "2. Rasio Gaya Hidup (Lifestyle Ratio)",
     getVal: (r) => `${Math.round(r.lifestyleRatio)}%`,
     badgeText: (r) => r.ls.label,
     badgeColor: (r) => r.ls.color,
-    desc: "Jajan boleh, tapi jangan sampai 30% lebih. Kalau lewat, lo bukan lagi 'self reward', lo udah 'self sabotage'.",
+    desc: "Jajan boleh, tapi jangan sampai 30% lebih. Kalau lewat, lo udah 'self sabotage'.",
     formula: "Pengeluaran Keinginan / Pendapatan × 100%",
     thresholds: [
       { text: "≤ 30% — Terkendali", color: "#5a9367" },
       { text: "31% – 45% — Waspada", color: "#C89B3C" },
       { text: "> 45% — Boros", color: "#c0604a" }
     ],
-    refs: [
-      "50/30/20 Rule (Elizabeth Warren, 2005): Maksimal 30% untuk wants / gaya hidup",
-      "QM Financial (Ligwina Hananto): Alokasi gaya hidup maksimal 20%",
-      "CNBC Indonesia: Batasi pengeluaran non-esensial maksimal 30%"
-    ],
-    tab: 'pengeluaran', category: 'keinginan', btnText: "Ke Tab Pengeluaran (Kategori Keinginan)"
+    refs: ["50/30/20 Rule", "CNBC Indonesia"],
+    tab: 'pengeluaran', category: 'keinginan', btnText: "Ke Tab Pengeluaran (Keinginan)"
   },
   liquidity: {
     title: "3. Rasio Likuiditas (Liquidity Ratio)",
     getVal: (r) => isFinite(r.liquidityMonths) ? `${r.liquidityMonths.toFixed(1)}×` : '∞',
     badgeText: (r) => r.liq.label,
     badgeColor: (r) => r.liq.color,
-    desc: "Ini duit yang bisa lo pakai kalau penghasilan mendadak stop. Minimal 3 bulan pengeluaran harus tersedia di kas/e-wallet. Kalau cuma 1 bulan, lo lagi main api.",
+    desc: "Minimal 3 bulan pengeluaran harus tersedia di kas/e-wallet.",
     formula: "(Kas + E-Wallet) / Pengeluaran Rutin Bulanan",
     thresholds: [
-      { text: "≥ 3× — Aman (Bisa cover 3–6 bulan)", color: "#5a9367" },
+      { text: "≥ 3× — Aman", color: "#5a9367" },
       { text: "1× – 2.9× — Rawan", color: "#C89B3C" },
       { text: "< 1× — Defisit", color: "#c0604a" }
     ],
-    refs: [
-      "CFP Board: Ketahanan kas 4–6 bulan pengeluaran",
-      "Pandji Harsanto: Rasio likuiditas ideal 3–12× pengeluaran",
-      "CNBC Indonesia: Kas cair minimal 3–6 bulan"
-    ],
+    refs: ["CFP Board", "CNBC Indonesia"],
     tab: 'beranda', section: 'summary-grid', btnText: "Lihat Saldo Bersih di Beranda"
   },
   emergency: {
@@ -521,39 +496,28 @@ const popInfo = {
     getVal: (r) => `${Math.round(r.emergencyRatio)}%`,
     badgeText: (r) => r.em.label,
     badgeColor: (r) => r.em.color,
-    desc: "Dana darurat = jaring pengaman lo. Target 6 bulan pengeluaran. Ini bukan tabungan cita-cita — cuma boleh dipakai kalau kena musibah beneran.",
+    desc: "Target 6 bulan pengeluaran sebagai jaring pengaman.",
     formula: "Total Dana Darurat / (Pengeluaran Bulanan × 6) × 100%",
     thresholds: [
-      { text: "≥ 100% — Terpenuhi (6 Bulan)", color: "#5a9367" },
+      { text: "≥ 100% — Terpenuhi", color: "#5a9367" },
       { text: "50% – 99% — Menuju Target", color: "#C89B3C" },
       { text: "< 50% — Mulai Kumpulkan", color: "#c0604a" }
     ],
-    refs: [
-      "CFP Board: Standar 3–6 bulan dana darurat",
-      "Kontan: Target ideal 6× pengeluaran rutin",
-      "Daya.id: 3–12 bulan sesuai profil risiko & tanggungan"
-    ],
-    tab: 'pengeluaran', category: 'darurat', btnText: "Ke Tab Pengeluaran (Kategori Dana Darurat)"
+    refs: ["CFP Board", "Kontan"],
+    tab: 'pengeluaran', category: 'darurat', btnText: "Ke Tab Pengeluaran (Dana Darurat)"
   },
   literacy: {
     title: "5. Skor Literasi Keuangan",
     getVal: (r) => `Lv.${r.levelIdx+1} · ${r.levels[r.levelIdx]} (${Math.round(r.literacyScore)}/100)`,
     badgeText: (r) => `Lv.${r.levelIdx+1}`,
     badgeColor: (r) => "#5a9367",
-    desc: "Skor ini gabungan dari 4 pilar di atas. Makin tinggi, makin cermat lo kelola duit. Lv.5 = Master Keuangan, duit lo kerja buat lo.",
-    formula: "(Skor Tabungan + Skor Gaya Hidup + Skor Likuiditas + Skor Darurat) / 4",
+    desc: "Skor gabungan dari 4 pilar keuangan.",
+    formula: "(Skor Tabungan + Gaya Hidup + Likuiditas + Darurat) / 4",
     thresholds: [
-      { text: "81–100 — Lv.5 Master Keuangan", color: "#5a9367" },
-      { text: "61–80 — Lv.4 Jagoan Hemat", color: "#5a9367" },
-      { text: "41–60 — Lv.3 Cukup Cermat", color: "#C89B3C" },
-      { text: "21–40 — Lv.2 Belajar Hemat", color: "#C89B3C" },
-      { text: "0–20 — Lv.1 Pemula Boros", color: "#c0604a" }
+      { text: "81–100 — Lv.5 Master", color: "#5a9367" },
+      { text: "0–20 — Lv.1 Pemula", color: "#c0604a" }
     ],
-    refs: [
-      "OJK SNLIK 2025: Indeks Literasi Keuangan Indonesia (66,46%)",
-      "OECD 2016: Framework (Knowledge + Behaviour + Attitude)",
-      "Lusardi & Mitchell 2011: Measurement of Financial Literacy"
-    ],
+    refs: ["OJK SNLIK 2025", "OECD"],
     tab: 'beranda', section: 'healthGrid', btnText: "Lihat Semua Indikator Beranda"
   }
 };
@@ -577,7 +541,7 @@ function openHealthModal(id) {
 
   const valEl = document.getElementById('healthModalValue');
   if (valEl) {
-    valEl.textContent = currentCalculatedHealth ? info.getVal(currentCalculatedHealth) : '-';
+    valEl.textContent = currentCalculatedHalth ? info.getVal(currentCalculatedHalth) : '-';
     valEl.style.color = bColor;
   }
 
@@ -615,7 +579,6 @@ function openHealthModal(id) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
   }
-
   overlay.classList.add('open');
 }
 
@@ -624,11 +587,112 @@ function closeHealthModal() {
   if (overlay) overlay.classList.remove('open');
 }
 
+function updateReport(tx) {
+  try {
+    const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
+    const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
+    const diff     = totalIn - totalOut
+    const count    = tx.length
+    const avg      = count ? (totalIn + totalOut) / 30 : 0
+
+    const repIn = document.getElementById('repTotalIn');
+    if (repIn) repIn.textContent = fmtRp(totalIn);
+    const repOut = document.getElementById('repTotalOut');
+    if (repOut) repOut.textContent = fmtRp(totalOut);
+    const diffEl = document.getElementById('repDiff');
+    if (diffEl) {
+      diffEl.textContent = fmtRp(diff);
+      diffEl.style.color = diff >= 0 ? '#5a9367' : '#c0604a';
+    }
+    const repAvg = document.getElementById('repAvg');
+    if (repAvg) repAvg.textContent = fmtRp(avg);
+    const repCount = document.getElementById('repCount');
+    if (repCount) repCount.textContent = count;
+
+    const days = {};
+    tx.forEach(t => {
+      if (!t.date) return;
+      if (!days[t.date]) days[t.date] = { in: 0, out: 0 };
+      if (t.type === 'in') days[t.date].in += Number(t.amount);
+      else days[t.date].out += Number(t.amount);
+    });
+    const dates = Object.keys(days).sort().slice(-31);
+    const labels = dates.map(d => d.slice(5));
+    const inData = dates.map(d => days[d].in || 0);
+    const outData = dates.map(d => days[d].out || 0);
+    const ctx = document.getElementById('reportChart');
+    if (ctx) {
+      chartInstances.report = safeDestroy(chartInstances.report);
+      if (labels.length) {
+        chartInstances.report = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Pendapatan', data: inData, backgroundColor: 'rgba(90,147,103,0.7)', borderRadius: 4 },
+              { label: 'Pengeluaran', data: outData, backgroundColor: 'rgba(192,96,74,0.7)', borderRadius: 4 }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Poppins', size: 11 } } }, tooltip: { callbacks: { label: (ctx) => fmtRp(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 12 } } }, animation: { duration: 300 } }
+        });
+      }
+    }
+  } catch (e) {
+    console.error("Error updating report:", e);
+  }
+}
+
+// ===== NAVIGATION =====
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
+    this.classList.add('active')
+    const tab = this.dataset.tab
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'))
+    const targetTab = document.getElementById('tab-' + tab);
+    if (targetTab) targetTab.classList.add('active');
+    if (tab === 'laporan') updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+})
+
+// ===== MONTH NAV =====
+document.getElementById('prevMonth')?.addEventListener('click', () => {
+  const [y, m] = currentMonth.split('-').map(Number)
+  currentMonth = (m === 1) ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0')
+  renderAll()
+})
+document.getElementById('nextMonth')?.addEventListener('click', () => {
+  const [y, m] = currentMonth.split('-').map(Number)
+  currentMonth = (m === 12) ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0')
+  renderAll()
+})
+
+// ===== ALLOWANCE =====
+const allowanceInput = document.getElementById('allowanceInput')
+if (allowanceInput) {
+  formatAmountInput(allowanceInput)
+  allowanceInput.value = localStorage.getItem('gwcatat_allowance') || ''
+  allowanceInput.addEventListener('change', () => {
+    localStorage.setItem('gwcatat_allowance', allowanceInput.value)
+  })
+}
+
+// ===== REPORT FILTERS =====
+document.getElementById('reportPeriod')?.addEventListener('change', () => {
+  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+})
+document.getElementById('reportDate')?.addEventListener('change', () => {
+  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+})
+if (document.getElementById('reportDate')) {
+  document.getElementById('reportDate').value = new Date().toISOString().slice(0, 10);
+}
+
 // ===== INIT =====
 function init() {
   renderAll();
 
-  // Bind modal close & card click events
   const healthCloseBtn = document.getElementById('healthModalClose');
   const healthOverlay = document.getElementById('healthModalOverlay');
   if (healthCloseBtn) healthCloseBtn.onclick = closeHealthModal;
