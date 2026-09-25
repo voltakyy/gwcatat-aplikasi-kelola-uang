@@ -4,7 +4,10 @@
 
 // ===== CEK SESSION =====
 const session = JSON.parse(localStorage.getItem('gwcatat_session') || 'null')
-if (!session) window.location.href = '/login.html'
+if (!session && window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+  window.location.href = 'login.html'
+}
+
 
 // ===== LOGOUT =====
 document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -84,51 +87,62 @@ const modalClose   = document.getElementById('modalClose')
 const modalCategory= document.getElementById('modalCategory')
 const categoryWrap = document.getElementById('categoryWrap')
 
-formatAmountInput(modalAmount)
+if (modalAmount) formatAmountInput(modalAmount)
 
 function openModal(mode) {
   modalMode = mode
-  modalDate.value = new Date().toISOString().slice(0, 10)
-  modalDesc.value = ''
-  modalAmount.value = ''
-  modalCategory.value = mode === 'in' ? 'pemasukan' : 'kebutuhan'
+  if (!modalOverlay) return;
+
+  if (modalDate) modalDate.value = new Date().toISOString().slice(0, 10)
+  if (modalDesc) modalDesc.value = ''
+  if (modalAmount) modalAmount.value = ''
+  if (modalCategory) modalCategory.value = mode === 'in' ? 'pemasukan' : 'kebutuhan'
 
   if (mode === 'in') {
-    modalTitle.textContent = '+ Tambah Pendapatan'
-    modalSubmit.textContent = 'Simpan Pendapatan'
-    modalSubmit.className = 'modal-submit income'
-    // Kategori untuk pendapatan
-    modalCategory.innerHTML = `
-      <option value="pemasukan">Pemasukan Umum</option>
-      <option value="uang_jajan">Uang Jajan</option>
-      <option value="gaji">Gaji</option>
-      <option value="bonus">Bonus</option>
-      <option value="investasi">Investasi</option>
-      <option value="lainnya">Lainnya</option>
-    `
+    if (modalTitle) modalTitle.textContent = '+ Tambah Pendapatan'
+    if (modalSubmit) {
+      modalSubmit.textContent = 'Simpan Pendapatan'
+      modalSubmit.className = 'modal-submit income'
+    }
+    if (modalCategory) {
+      modalCategory.innerHTML = `
+        <option value="pemasukan">Pemasukan Umum</option>
+        <option value="uang_jajan">Uang Jajan</option>
+        <option value="gaji">Gaji</option>
+        <option value="bonus">Bonus</option>
+        <option value="investasi">Investasi</option>
+        <option value="lainnya">Lainnya</option>
+      `
+    }
   } else {
-    modalTitle.textContent = '− Tambah Pengeluaran'
-    modalSubmit.textContent = 'Simpan Pengeluaran'
-    modalSubmit.className = 'modal-submit expense'
-    modalCategory.innerHTML = `
-      <option value="kebutuhan">Kebutuhan</option>
-      <option value="keinginan">Keinginan</option>
-      <option value="tabungan">Tabungan</option>
-      <option value="darurat">Dana Darurat</option>
-      <option value="makan">Makan & Minum</option>
-      <option value="transport">Transportasi</option>
-      <option value="tagihan">Tagihan</option>
-      <option value="hiburan">Hiburan</option>
-      <option value="lainnya">Lainnya</option>
-    `
+    if (modalTitle) modalTitle.textContent = '− Tambah Pengeluaran'
+    if (modalSubmit) {
+      modalSubmit.textContent = 'Simpan Pengeluaran'
+      modalSubmit.className = 'modal-submit expense'
+    }
+    if (modalCategory) {
+      modalCategory.innerHTML = `
+        <option value="kebutuhan">Kebutuhan</option>
+        <option value="keinginan">Keinginan</option>
+        <option value="tabungan">Tabungan</option>
+        <option value="darurat">Dana Darurat</option>
+        <option value="makan">Makan & Minum</option>
+        <option value="transport">Transportasi</option>
+        <option value="tagihan">Tagihan</option>
+        <option value="hiburan">Hiburan</option>
+        <option value="lainnya">Lainnya</option>
+      `
+    }
   }
   modalOverlay.classList.add('open')
 }
 
-function closeModal() { modalOverlay.classList.remove('open') }
+function closeModal() { if (modalOverlay) modalOverlay.classList.remove('open') }
 
-modalClose.addEventListener('click', closeModal)
-modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal() })
+if (modalClose) modalClose.addEventListener('click', closeModal)
+if (modalOverlay) {
+  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal() })
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
@@ -141,24 +155,43 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-modalSubmit.addEventListener('click', () => {
-  const date   = modalDate.value
-  const desc   = modalDesc.value.trim() || (modalMode === 'in' ? 'Pendapatan' : 'Pengeluaran')
-  const amount = parseRibuan(modalAmount.value)
-  const cat    = modalCategory.value
-  if (!date || !amount) { modalAmount.focus(); return }
+if (modalSubmit) {
+  modalSubmit.addEventListener('click', () => {
+    try {
+      const date   = modalDate ? modalDate.value : null
+      const desc   = modalDesc ? modalDesc.value.trim() : ''
+      const finalDesc = desc || (modalMode === 'in' ? 'Pendapatan' : 'Pengeluaran')
+      const amount = modalAmount ? parseRibuan(modalAmount.value) : 0
+      const cat    = modalCategory ? modalCategory.value : 'lainnya'
 
-  transactions.push({ id: uid(), date, description: desc, amount, type: modalMode, category: cat })
-  saveData()
-  closeModal()
-  renderAll()
-})
+      if (!date || !amount) {
+        if (modalAmount) modalAmount.focus();
+        return
+      }
 
-document.getElementById('btnIncome').addEventListener('click', () => openModal('in'))
-document.getElementById('btnExpense').addEventListener('click', () => openModal('out'))
-// Tombol di tab Pendapatan & Pengeluaran
-document.getElementById('btnIncomeTab').addEventListener('click', () => openModal('in'))
-document.getElementById('btnExpenseTab').addEventListener('click', () => openModal('out'))
+      transactions.push({ id: uid(), date, description: finalDesc, amount, type: modalMode, category: cat })
+      saveData()
+      closeModal()
+      renderAll()
+    } catch (err) {
+      console.error("Error saving transaction:", err);
+      alert("Terjadi kesalahan saat menyimpan transaksi.");
+    }
+  })
+}
+
+// Initialize buttons only if they exist
+const btnIncome = document.getElementById('btnIncome');
+if (btnIncome) btnIncome.addEventListener('click', () => openModal('in'));
+
+const btnExpense = document.getElementById('btnExpense');
+if (btnExpense) btnExpense.addEventListener('click', () => openModal('out'));
+
+const btnIncomeTab = document.getElementById('btnIncomeTab');
+if (btnIncomeTab) btnIncomeTab.addEventListener('click', () => openModal('in'));
+
+const btnExpenseTab = document.getElementById('btnExpenseTab');
+if (btnExpenseTab) btnExpenseTab.addEventListener('click', () => openModal('out'));
 
 // ===== RENDER ALL =====
 function renderAll() {
