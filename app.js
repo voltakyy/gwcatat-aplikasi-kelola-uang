@@ -224,7 +224,7 @@ function renderCharts(tx) {
             { label: 'Pengeluaran', data: outData, borderColor: '#c0604a', backgroundColor: 'rgba(192,96,74,0.08)', fill: true, tension: 0.4, pointRadius: 2 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Poppins', size: 12 } } }, x: { ticks: { font: { family: 'Poppins', size: 12 } } } }, animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 12 } } }, x: { ticks: { font: { family: 'Manrope', size: 12 } } } }, animation: { duration: 300 } }
       })
     }
   }
