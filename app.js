@@ -130,6 +130,12 @@ function closeModal() { modalOverlay.classList.remove('open') }
 modalClose.addEventListener('click', closeModal)
 modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal() })
 
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && modalOverlay.classList.contains('open')) {
+    modalSubmit.click();
+  }
+});
+
 modalSubmit.addEventListener('click', () => {
   const date   = modalDate.value
   const desc   = modalDesc.value.trim() || (modalMode === 'in' ? 'Pendapatan' : 'Pengeluaran')
@@ -186,7 +192,7 @@ function renderCharts(tx) {
       chartInstances.pie = new Chart(pieCtx, {
         type: 'doughnut',
         data: { labels: ['Pendapatan', 'Pengeluaran'], datasets: [{ data: [totalIn, totalOut], backgroundColor: ['#5a9367', '#c0604a'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 12 } } } }, cutout: '68%', animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } } }, cutout: '68%', animation: { duration: 300 } }
       })
     }
   }
@@ -218,7 +224,7 @@ function renderCharts(tx) {
             { label: 'Pengeluaran', data: outData, borderColor: '#c0604a', backgroundColor: 'rgba(192,96,74,0.08)', fill: true, tension: 0.4, pointRadius: 2 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { family: 'Bebas Neue', size: 12 } } }, x: { ticks: { font: { family: 'Bebas Neue', size: 12 } } } }, animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Poppins', size: 12 } } }, x: { ticks: { font: { family: 'Poppins', size: 12 } } } }, animation: { duration: 300 } }
       })
     }
   }
@@ -652,7 +658,7 @@ function updateReport(tx) {
             { label: 'Pengeluaran', data: outData, backgroundColor: 'rgba(192,96,74,0.7)', borderRadius: 4 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11 } } } }, scales: { y: { beginAtZero: true } }, animation: { duration: 300 } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } }, tooltip: { callbacks: { label: (ctx) => fmtRp(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v) } } }, animation: { duration: 300 } }
       })
     }
   }
