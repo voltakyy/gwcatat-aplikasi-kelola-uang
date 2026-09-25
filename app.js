@@ -144,17 +144,6 @@ if (modalOverlay) {
   modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal() })
 }
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const overlay = document.getElementById('modalOverlay');
-    if (overlay && overlay.classList.contains('open')) {
-      e.preventDefault();
-      const submitBtn = document.getElementById('modalSubmit');
-      if (submitBtn) submitBtn.click();
-    }
-  }
-});
-
 if (modalSubmit) {
   modalSubmit.addEventListener('click', () => {
     try {
