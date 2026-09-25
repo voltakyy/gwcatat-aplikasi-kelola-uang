@@ -602,8 +602,11 @@ function closeHealthModal() {
   if (overlay) overlay.classList.remove('open');
 }
 
-// Bind modal close & card click events
-document.addEventListener('DOMContentLoaded', () => {
+// ===== INIT =====
+function init() {
+  renderAll();
+
+  // Bind modal close & card click events
   const healthCloseBtn = document.getElementById('healthModalClose');
   const healthOverlay = document.getElementById('healthModalOverlay');
   if (healthCloseBtn) healthCloseBtn.onclick = closeHealthModal;
@@ -621,97 +624,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cardEmergency) cardEmergency.onclick = () => openHealthModal('emergency');
   const cardLiteracy = document.getElementById('cardLiteracy');
   if (cardLiteracy) cardLiteracy.onclick = () => openHealthModal('literacy');
-});
-
-// ===== REPORT =====
-function updateReport(tx) {
-  const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
-  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0)
-  const diff     = totalIn - totalOut
-  const count    = tx.length
-  const avg      = count ? (totalIn + totalOut) / 30 : 0
-
-  document.getElementById('repTotalIn').textContent  = fmtRp(totalIn)
-  document.getElementById('repTotalOut').textContent = fmtRp(totalOut)
-  const diffEl = document.getElementById('repDiff')
-  diffEl.textContent  = fmtRp(diff)
-  diffEl.style.color  = diff >= 0 ? '#5a9367' : '#c0604a'
-  document.getElementById('repAvg').textContent   = fmtRp(avg)
-  document.getElementById('repCount').textContent = count
-
-  const days  = {}
-  tx.forEach(t => {
-    if (!t.date) return
-    if (!days[t.date]) days[t.date] = { in: 0, out: 0 }
-    if (t.type === 'in') days[t.date].in += Number(t.amount)
-    else days[t.date].out += Number(t.amount)
-  })
-  const dates   = Object.keys(days).sort().slice(-31)
-  const labels  = dates.map(d => d.slice(5))
-  const inData  = dates.map(d => days[d].in || 0)
-  const outData = dates.map(d => days[d].out || 0)
-  const ctx = document.getElementById('reportChart')
-  if (ctx) {
-    chartInstances.report = safeDestroy(chartInstances.report)
-    if (labels.length) {
-      chartInstances.report = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Pendapatan', data: inData,  backgroundColor: 'rgba(90,147,103,0.7)',  borderRadius: 4 },
-            { label: 'Pengeluaran', data: outData, backgroundColor: 'rgba(192,96,74,0.7)', borderRadius: 4 }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { family: 'Poppins', size: 11 } } }, tooltip: { callbacks: { label: (ctx) => fmtRp(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtRp(v), font: { family: 'Manrope', size: 12 } } }, animation: { duration: 300 } }
-      })
-    }
-  }
 }
 
-// ===== NAVIGATION =====
-document.querySelectorAll('.nav-btn').forEach(btn => {
-  btn.addEventListener('click', function () {
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
-    this.classList.add('active')
-    const tab = this.dataset.tab
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'))
-    document.getElementById('tab-' + tab).classList.add('active')
-    if (tab === 'laporan') updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  })
-})
-
-// ===== MONTH NAV =====
-document.getElementById('prevMonth').addEventListener('click', () => {
-  const [y, m] = currentMonth.split('-').map(Number)
-  currentMonth = (m === 1) ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0')
-  renderAll()
-})
-document.getElementById('nextMonth').addEventListener('click', () => {
-  const [y, m] = currentMonth.split('-').map(Number)
-  currentMonth = (m === 12) ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0')
-  renderAll()
-})
-
-// ===== ALLOWANCE =====
-const allowanceInput = document.getElementById('allowanceInput')
-if (allowanceInput) {
-  formatAmountInput(allowanceInput)
-  allowanceInput.value = localStorage.getItem('gwcatat_allowance') || ''
-  allowanceInput.addEventListener('change', () => {
-    localStorage.setItem('gwcatat_allowance', allowanceInput.value)
-  })
-}
-
-// ===== REPORT FILTERS =====
-document.getElementById('reportPeriod').addEventListener('change', () => {
-  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
-})
-document.getElementById('reportDate').addEventListener('change', () => {
-  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
-})
-document.getElementById('reportDate').value = new Date().toISOString().slice(0, 10)
-
-// ===== INIT =====
-renderAll()
+document.addEventListener('DOMContentLoaded', init);
