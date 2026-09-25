@@ -3,9 +3,9 @@
 // =============================================================
 
 // ===== CEK SESSION =====
-const session = JSON.parse(localStorage.getItem('gwcatat_session') || 'null')
-if (!session && window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
-  window.location.href = 'login.html'
+const session = JSON.parse(localStorage.getItem('gwcatat_session') || 'null');
+if (!session) {
+  window.location.href = 'login.html';
 }
 
 
