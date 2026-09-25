@@ -541,7 +541,7 @@ function openHealthModal(id) {
 
   const valEl = document.getElementById('healthModalValue');
   if (valEl) {
-    valEl.textContent = currentCalculatedHalth ? info.getVal(currentCalculatedHalth) : '-';
+    valEl.textContent = currentCalculatedHealth ? info.getVal(currentCalculatedHealth) : '-';
     valEl.style.color = bColor;
   }
 
