@@ -79,12 +79,14 @@ body {
 .nav-btn {
   flex: 1; padding: 9px 12px; border: none; cursor: pointer;
   border-radius: 10px; font-size: 13px; font-weight: 600;
-  color: var(--muted); background: none; transition: all .18s;
+  color: var(--muted); background: none; transition: all .18s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  white-space: nowrap;
+  white-space: nowrap; user-select: none;
 }
-.nav-btn:hover { color: var(--teal); background: var(--bg); }
-.nav-btn.active { background: var(--teal); color: #fff; }
+.nav-btn:hover { color: #fff; background: var(--gold); box-shadow: 0 4px 12px rgba(200, 155, 60, 0.35); transform: translateY(-1px); }
+.nav-btn:active { transform: scale(0.95); }
+.nav-btn.active { background: var(--teal); color: #fff; box-shadow: 0 2px 8px rgba(38,70,83,0.22); }
+.nav-btn.active:hover { background: var(--gold); color: #fff; box-shadow: 0 4px 12px rgba(200,155,60,0.4); }
 
 /* ---- Cards ---- */
 .card {
@@ -175,37 +177,137 @@ body {
 .health-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 @media (min-width: 480px) { .health-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 720px) { .health-grid { grid-template-columns: repeat(5, 1fr); } }
-.health-item { text-align: center; }
-.ring {
-  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 6px;
-  display: flex; align-items: center; justify-content: center;
-  background: conic-gradient(#5a9367 0deg, #e8e4de 0deg);
+.health-item {
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  position: relative;
+  user-select: none;
 }
-.ring-inner {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: var(--surface); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+.health-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  border-color: rgba(200, 155, 60, 0.45);
 }
-.tank {
-  width: 36px; height: 58px; border-radius: 7px;
-  background: var(--bg); border: 1px solid var(--border);
-  overflow: hidden; position: relative; margin: 0 auto 6px;
+.health-item:active {
+  transform: scale(0.96);
 }
-.tank-fill {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(180deg, rgba(90,147,103,0.6), #5a9367);
-  transition: height .7s ease;
+.health-item .click-hint {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 5px;
+  display: block;
+  font-weight: 600;
+  letter-spacing: .02em;
+  opacity: .8;
 }
-.health-label { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.health-item:hover .click-hint {
+  color: var(--gold);
+  opacity: 1;
+}
 .badge {
   display: inline-block; font-size: 9px; font-weight: 700;
   padding: 2px 8px; border-radius: 50px;
   background: rgba(90,147,103,0.15); color: var(--green);
   text-transform: uppercase; letter-spacing: .04em;
 }
+.badge.healthy { background: rgba(90,147,103,0.15); color: var(--green); }
 .badge.warn { background: rgba(200,155,60,0.15); color: var(--gold); }
 .badge.danger { background: rgba(192,96,74,0.15); color: var(--red); }
+
+/* ---- Health Modal Specific Styles ---- */
+.health-modal-box {
+  max-width: 480px;
+  padding: 24px;
+}
+.health-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed var(--border);
+}
+.health-stat-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--teal);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.health-stat-desc {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.45;
+  font-weight: 500;
+}
+.health-info-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.health-box-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.health-formula {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal);
+  background: var(--surface);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.health-thresholds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+.threshold-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+.health-ref-list {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ref-bullet {
+  position: relative;
+  padding-left: 12px;
+}
+.ref-bullet::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: 700;
+}
 
 /* ---- Level badge ---- */
 .level-box {

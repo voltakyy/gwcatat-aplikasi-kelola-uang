@@ -45,6 +45,32 @@ function formatAmountInput(el) {
   })
 }
 
+// ===== RING HELPER =====
+function setRing(id, percentage, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const p = Math.min(100, Math.max(0, percentage));
+  const deg = (p / 100) * 360;
+  el.style.background = `conic-gradient(${color} ${deg}deg, #e8e4de ${deg}deg)`;
+}
+
+// ===== BADGE HELPER =====
+function setBadge(id, text, color) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = text;
+    let badgeClass = 'badge';
+    if (color === '#5a9367') badgeClass += ' healthy';
+    else if (color === '#C89B3C') badgeClass += ' warn';
+    else if (color === '#c0604a') badgeClass += ' danger';
+    el.className = badgeClass;
+    if (color) {
+      el.style.color = color;
+      el.style.backgroundColor = color + '22';
+    }
+  }
+}
+
 // ===== MODAL LOGIC =====
 let modalMode = 'in' // 'in' or 'out'
 
@@ -312,55 +338,279 @@ function renderCalendar(tx) {
   })
 }
 
+let currentCalculatedHealth = null;
+
 // ===== HEALTH INDICATORS =====
 function renderHealthIndicators(tx) {
-  const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0)
-  const base     = totalIn || 1
-  const tabungan = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0)
-  const keinginan= tx.filter(t => t.type === 'out' && t.category === 'keinginan').reduce((s, t) => s + Number(t.amount), 0)
-  const darurat  = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0)
+  // Calculate base incomes and expenses
+  const totalIncome = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
+  const totalExpense = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
+  const base = totalIncome || 1; // avoid division by zero
 
-  const savingsRatio   = (tabungan / base) * 100
-  const lifestyleRatio = (keinginan / base) * 100
-  const emergencyRatio = Math.min(100, darurat / 200000 * 100)
+  // Category totals
+  const tabunganAmt = tx.filter(t => t.type === 'out' && t.category === 'tabungan').reduce((s, t) => s + Number(t.amount), 0);
+  const keinginanAmt = tx.filter(t => t.type === 'out' && t.category === 'keinginan').reduce((s, t) => s + Number(t.amount), 0);
+  const daruratAmt   = tx.filter(t => t.type === 'out' && t.category === 'darurat').reduce((s, t) => s + Number(t.amount), 0);
+  const cashEwallet  = totalIncome - totalExpense; // liquid cash
 
-  function setRing(id, ratio, color) {
-    const el = document.getElementById(id)
-    if (el) el.style.background = `conic-gradient(${color} ${Math.min(100, ratio) * 3.6}deg, #e8e4de ${Math.min(100, ratio) * 3.6}deg)`
+  // 1️⃣ Savings Ratio
+  const savingsRatio = (tabunganAmt / base) * 100;
+  const sv = savingsRatio >= 20 ? {color: '#5a9367', label: 'Sehat'}
+           : savingsRatio >= 10 ? {color: '#C89B3C', label: 'Kurang'}
+           : {color: '#c0604a', label: 'Bahaya'};
+  setRing('ringSavings', savingsRatio, sv.color);
+  const savValEl = document.getElementById('savingsValue');
+  if (savValEl) savValEl.textContent = Math.round(savingsRatio) + '%';
+  setBadge('savingsBadge', sv.label, sv.color);
+
+  // 2️⃣ Lifestyle Ratio
+  const lifestyleRatio = (keinginanAmt / base) * 100;
+  const ls = lifestyleRatio <= 30 ? {color: '#5a9367', label: 'Terkendali'}
+           : lifestyleRatio <= 45 ? {color: '#C89B3C', label: 'Waspada'}
+           : {color: '#c0604a', label: 'Boros'};
+  setRing('ringLifestyle', 100 - lifestyleRatio, ls.color);
+  const lifeValEl = document.getElementById('lifestyleValue');
+  if (lifeValEl) lifeValEl.textContent = Math.round(lifestyleRatio) + '%';
+  setBadge('lifestyleBadge', ls.label, ls.color);
+
+  // 3️⃣ Liquidity Ratio
+  const liquidityMonths = totalExpense > 0 ? (cashEwallet / totalExpense) : (cashEwallet >= 0 ? 6 : 0);
+  const liq = liquidityMonths >= 3 ? {color: '#5a9367', label: 'Aman'}
+            : liquidityMonths >= 1 ? {color: '#C89B3C', label: 'Rawan'}
+            : {color: '#c0604a', label: 'Defisit'};
+  const tankFill = document.getElementById('tankFill');
+  if (tankFill) {
+    const perc = Math.min(100, Math.max(0, (liquidityMonths / 6) * 100));
+    tankFill.style.height = perc + '%';
+    tankFill.textContent = isFinite(liquidityMonths) ? liquidityMonths.toFixed(1) + '×' : '∞';
   }
-  function setBadge(id, label) {
-    const el = document.getElementById(id)
-    if (!el) return
-    el.textContent = label
-    el.className = 'badge ' + (label === 'Bahaya' ? 'danger' : label === 'Waspada' ? 'warn' : '')
-  }
+  setBadge('liquidBadge', liq.label, liq.color);
 
-  const sv = savingsRatio >= 20 ? { color: '#5a9367', label: 'Sehat' } : savingsRatio >= 10 ? { color: '#C89B3C', label: 'Waspada' } : { color: '#c0604a', label: 'Bahaya' }
-  setRing('ringSavings', savingsRatio, sv.color)
-  document.getElementById('savingsValue').textContent = Math.round(savingsRatio) + '%'
-  setBadge('savingsBadge', sv.label)
+  // 4️⃣ Emergency Fund Ratio
+  const targetEmergency = (totalExpense || 1) * 6;
+  const emergencyRatio = (daruratAmt / targetEmergency) * 100;
+  const em = emergencyRatio >= 100 ? {color: '#5a9367', label: 'Terpenuhi'}
+           : emergencyRatio >= 50  ? {color: '#C89B3C', label: 'Menuju'}
+           : {color: '#c0604a', label: 'Mulai'};
+  setRing('ringEmergency', emergencyRatio, em.color);
+  const emValEl = document.getElementById('emergencyValue');
+  if (emValEl) emValEl.textContent = Math.round(emergencyRatio) + '%';
+  setBadge('emergencyBadge', em.label, em.color);
 
-  const ls = lifestyleRatio <= 30 ? { color: '#5a9367', label: 'Sehat' } : lifestyleRatio <= 45 ? { color: '#C89B3C', label: 'Waspada' } : { color: '#c0604a', label: 'Bahaya' }
-  setRing('ringLifestyle', 100 - lifestyleRatio, ls.color)
-  document.getElementById('lifestyleValue').textContent = Math.round(lifestyleRatio) + '%'
-  setBadge('lifestyleBadge', ls.label)
+  // 5️⃣ Financial Literacy Score
+  const scoreSavings = Math.min(100, Math.max(0, (savingsRatio / 20) * 100));
+  const scoreLifestyle = lifestyleRatio <= 30 ? 100 : Math.max(0, 100 - (lifestyleRatio - 30) * 3);
+  const scoreLiquidity = Math.min(100, Math.max(0, (liquidityMonths / 3) * 100));
+  const scoreEmergency = Math.min(100, Math.max(0, emergencyRatio));
+  const literacyScore = (scoreSavings + scoreLifestyle + scoreLiquidity + scoreEmergency) / 4;
 
-  const tankFill = document.getElementById('tankFill')
-  if (tankFill) tankFill.style.height = Math.max(8, 100 - (tabungan / base) * 100) + '%'
-  setBadge('liquidBadge', 'Aman')
+  const levels = ['Pemula Boros','Belajar Hemat','Cukup Cermat','Jagoan Hemat','Master Keuangan'];
+  const levelIdx = literacyScore >= 81 ? 4 : literacyScore >= 61 ? 3 : literacyScore >= 41 ? 2 : literacyScore >= 21 ? 1 : 0;
 
-  const em = emergencyRatio >= 100 ? { color: '#5a9367', label: 'Terpenuhi' } : emergencyRatio >= 50 ? { color: '#C89B3C', label: 'Menuju' } : { color: '#c0604a', label: 'Mulai' }
-  setRing('ringEmergency', emergencyRatio, em.color)
-  document.getElementById('emergencyValue').textContent = Math.round(emergencyRatio) + '%'
-  setBadge('emergencyBadge', em.label)
+  const lvlEl = document.getElementById('levelValue');
+  if (lvlEl) lvlEl.textContent = 'Lv.' + (levelIdx + 1);
+  const xpEl = document.getElementById('xpFill');
+  if (xpEl) xpEl.style.width = Math.min(100, Math.max(0, literacyScore)) + '%';
+  const litTitleEl = document.getElementById('literacyTitle');
+  if (litTitleEl) litTitleEl.textContent = levels[levelIdx] + ' · ' + Math.round(literacyScore) + '/100';
 
-  const score = (Math.min(100, savingsRatio) + Math.min(100, 100 - lifestyleRatio) + 100 + emergencyRatio) / 4
-  const level  = Math.min(5, Math.max(1, Math.floor(score / 20) + 1))
-  const titles = ['Pemula', 'Belajar', 'Cermat', 'Jagoan', 'Master']
-  document.getElementById('levelValue').textContent    = 'Lv.' + level
-  document.getElementById('xpFill').style.width        = ((score % 20) * 5) + '%'
-  document.getElementById('literacyTitle').textContent = titles[level - 1] + ' · ' + Math.round(score) + '/100'
+  // Store state for modal pop-ups
+  currentCalculatedHealth = {
+    savingsRatio, sv,
+    lifestyleRatio, ls,
+    liquidityMonths, liq,
+    emergencyRatio, em,
+    literacyScore, levelIdx, levels
+  };
 }
+
+// ------- Clickable Cards & Pop-up Modal -------
+const popInfo = {
+  savings: {
+    title: "1. Rasio Tabungan (Savings Ratio)",
+    getVal: (r) => `${Math.round(r.savingsRatio)}%`,
+    badgeText: (r) => r.sv.label,
+    badgeColor: (r) => r.sv.color,
+    desc: "Tabungan lo tuh bahan bakar masa depan. Minimal 20% dari uang jajan bulanan wajib disisihkan. Kurang dari 10%? Bahaya, lo hidup paycheck-to-paycheck.",
+    formula: "Tabungan Bulanan / Pendapatan × 100%",
+    thresholds: [
+      { text: "≥ 20% — Sehat", color: "#5a9367" },
+      { text: "10% – 19% — Kurang", color: "#C89B3C" },
+      { text: "< 10% — Bahaya", color: "#c0604a" }
+    ],
+    refs: [
+      "50/30/20 Rule — Elizabeth Warren & Amelia Warren Tyagi, buku All Your Worth (2005): 20% untuk tabungan & investasi",
+      "Ligwina Hananto (QM Financial): Rasio menabung minimal 10% dari penghasilan",
+      "CFP Board: Savings Rate target 10–20% dari gross income"
+    ],
+    tab: 'pengeluaran', category: 'tabungan', btnText: "Ke Tab Pengeluaran (Kategori Tabungan)"
+  },
+  lifestyle: {
+    title: "2. Rasio Gaya Hidup (Lifestyle Ratio)",
+    getVal: (r) => `${Math.round(r.lifestyleRatio)}%`,
+    badgeText: (r) => r.ls.label,
+    badgeColor: (r) => r.ls.color,
+    desc: "Jajan boleh, tapi jangan sampai 30% lebih. Kalau lewat, lo bukan lagi 'self reward', lo udah 'self sabotage'.",
+    formula: "Pengeluaran Keinginan / Pendapatan × 100%",
+    thresholds: [
+      { text: "≤ 30% — Terkendali", color: "#5a9367" },
+      { text: "31% – 45% — Waspada", color: "#C89B3C" },
+      { text: "> 45% — Boros", color: "#c0604a" }
+    ],
+    refs: [
+      "50/30/20 Rule (Elizabeth Warren, 2005): Maksimal 30% untuk wants / gaya hidup",
+      "QM Financial (Ligwina Hananto): Alokasi gaya hidup maksimal 20%",
+      "CNBC Indonesia: Batasi pengeluaran non-esensial maksimal 30%"
+    ],
+    tab: 'pengeluaran', category: 'keinginan', btnText: "Ke Tab Pengeluaran (Kategori Keinginan)"
+  },
+  liquidity: {
+    title: "3. Rasio Likuiditas (Liquidity Ratio)",
+    getVal: (r) => isFinite(r.liquidityMonths) ? `${r.liquidityMonths.toFixed(1)}×` : '∞',
+    badgeText: (r) => r.liq.label,
+    badgeColor: (r) => r.liq.color,
+    desc: "Ini duit yang bisa lo pakai kalau penghasilan mendadak stop. Minimal 3 bulan pengeluaran harus tersedia di kas/e-wallet. Kalau cuma 1 bulan, lo lagi main api.",
+    formula: "(Kas + E-Wallet) / Pengeluaran Rutin Bulanan",
+    thresholds: [
+      { text: "≥ 3× — Aman (Bisa cover 3–6 bulan)", color: "#5a9367" },
+      { text: "1× – 2.9× — Rawan", color: "#C89B3C" },
+      { text: "< 1× — Defisit", color: "#c0604a" }
+    ],
+    refs: [
+      "CFP Board: Ketahanan kas 4–6 bulan pengeluaran",
+      "Pandji Harsanto: Rasio likuiditas ideal 3–12× pengeluaran",
+      "CNBC Indonesia: Kas cair minimal 3–6 bulan"
+    ],
+    tab: 'beranda', section: 'summary-grid', btnText: "Lihat Saldo Bersih di Beranda"
+  },
+  emergency: {
+    title: "4. Dana Darurat (Emergency Fund)",
+    getVal: (r) => `${Math.round(r.emergencyRatio)}%`,
+    badgeText: (r) => r.em.label,
+    badgeColor: (r) => r.em.color,
+    desc: "Dana darurat = jaring pengaman lo. Target 6 bulan pengeluaran. Ini bukan tabungan cita-cita — cuma boleh dipakai kalau kena musibah beneran.",
+    formula: "Total Dana Darurat / (Pengeluaran Bulanan × 6) × 100%",
+    thresholds: [
+      { text: "≥ 100% — Terpenuhi (6 Bulan)", color: "#5a9367" },
+      { text: "50% – 99% — Menuju Target", color: "#C89B3C" },
+      { text: "< 50% — Mulai Kumpulkan", color: "#c0604a" }
+    ],
+    refs: [
+      "CFP Board: Standar 3–6 bulan dana darurat",
+      "Kontan: Target ideal 6× pengeluaran rutin",
+      "Daya.id: 3–12 bulan sesuai profil risiko & tanggungan"
+    ],
+    tab: 'pengeluaran', category: 'darurat', btnText: "Ke Tab Pengeluaran (Kategori Dana Darurat)"
+  },
+  literacy: {
+    title: "5. Skor Literasi Keuangan",
+    getVal: (r) => `Lv.${r.levelIdx+1} · ${r.levels[r.levelIdx]} (${Math.round(r.literacyScore)}/100)`,
+    badgeText: (r) => `Lv.${r.levelIdx+1}`,
+    badgeColor: (r) => "#5a9367",
+    desc: "Skor ini gabungan dari 4 pilar di atas. Makin tinggi, makin cermat lo kelola duit. Lv.5 = Master Keuangan, duit lo kerja buat lo.",
+    formula: "(Skor Tabungan + Skor Gaya Hidup + Skor Likuiditas + Skor Darurat) / 4",
+    thresholds: [
+      { text: "81–100 — Lv.5 Master Keuangan", color: "#5a9367" },
+      { text: "61–80 — Lv.4 Jagoan Hemat", color: "#5a9367" },
+      { text: "41–60 — Lv.3 Cukup Cermat", color: "#C89B3C" },
+      { text: "21–40 — Lv.2 Belajar Hemat", color: "#C89B3C" },
+      { text: "0–20 — Lv.1 Pemula Boros", color: "#c0604a" }
+    ],
+    refs: [
+      "OJK SNLIK 2025: Indeks Literasi Keuangan Indonesia (66,46%)",
+      "OECD 2016: Framework (Knowledge + Behaviour + Attitude)",
+      "Lusardi & Mitchell 2011: Measurement of Financial Literacy"
+    ],
+    tab: 'beranda', section: 'healthGrid', btnText: "Lihat Semua Indikator Beranda"
+  }
+};
+
+function openHealthModal(id) {
+  const info = popInfo[id];
+  const overlay = document.getElementById('healthModalOverlay');
+  if (!info || !overlay) return;
+
+  const titleEl = document.getElementById('healthModalTitle');
+  if (titleEl) titleEl.textContent = info.title;
+
+  const bText = currentCalculatedHealth ? info.badgeText(currentCalculatedHealth) : '-';
+  const bColor = currentCalculatedHealth ? info.badgeColor(currentCalculatedHealth) : '#5a9367';
+  const badgeEl = document.getElementById('healthModalBadge');
+  if (badgeEl) {
+    badgeEl.textContent = bText;
+    badgeEl.style.color = bColor;
+    badgeEl.style.backgroundColor = bColor + '22';
+  }
+
+  const valEl = document.getElementById('healthModalValue');
+  if (valEl) {
+    valEl.textContent = currentCalculatedHealth ? info.getVal(currentCalculatedHealth) : '-';
+    valEl.style.color = bColor;
+  }
+
+  const descEl = document.getElementById('healthModalDesc');
+  if (descEl) descEl.textContent = info.desc;
+  const formEl = document.getElementById('healthModalFormula');
+  if (formEl) formEl.textContent = info.formula;
+
+  const threshEl = document.getElementById('healthModalThresholds');
+  if (threshEl) {
+    threshEl.innerHTML = info.thresholds.map(t => `
+      <div class="threshold-item">
+        <span>${t.text}</span>
+        <span class="badge" style="color:${t.color}; background:${t.color}22">Status</span>
+      </div>
+    `).join('');
+  }
+
+  const refEl = document.getElementById('healthModalRef');
+  if (refEl) {
+    refEl.innerHTML = info.refs.map(r => `<div class="ref-bullet">${r}</div>`).join('');
+  }
+
+  const actionBtn = document.getElementById('healthModalAction');
+  if (actionBtn) {
+    actionBtn.innerHTML = `<span>${info.btnText}</span> ➔`;
+    actionBtn.onclick = () => {
+      closeHealthModal();
+      const navBtn = document.querySelector(`[data-tab="${info.tab}"]`);
+      if (navBtn) navBtn.click();
+      if (info.category) {
+        const catSelect = document.getElementById('modalCategory');
+        if (catSelect) catSelect.value = info.category;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeHealthModal() {
+  const overlay = document.getElementById('healthModalOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+// Bind modal close & card click events
+document.addEventListener('DOMContentLoaded', () => {
+  const healthCloseBtn = document.getElementById('healthModalClose');
+  const healthOverlay = document.getElementById('healthModalOverlay');
+  if (healthCloseBtn) healthCloseBtn.onclick = closeHealthModal;
+  if (healthOverlay) {
+    healthOverlay.onclick = (e) => { if (e.target === healthOverlay) closeHealthModal(); };
+  }
+
+  const cardSavings = document.getElementById('cardSavings');
+  if (cardSavings) cardSavings.onclick = () => openHealthModal('savings');
+  const cardLifestyle = document.getElementById('cardLifestyle');
+  if (cardLifestyle) cardLifestyle.onclick = () => openHealthModal('lifestyle');
+  const cardLiquidity = document.getElementById('cardLiquidity');
+  if (cardLiquidity) cardLiquidity.onclick = () => openHealthModal('liquidity');
+  const cardEmergency = document.getElementById('cardEmergency');
+  if (cardEmergency) cardEmergency.onclick = () => openHealthModal('emergency');
+  const cardLiteracy = document.getElementById('cardLiteracy');
+  if (cardLiteracy) cardLiteracy.onclick = () => openHealthModal('literacy');
+});
 
 // ===== REPORT =====
 function updateReport(tx) {
@@ -417,6 +667,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'))
     document.getElementById('tab-' + tab).classList.add('active')
     if (tab === 'laporan') updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   })
 })
 
