@@ -1,5 +1,5 @@
 // =============================================================
-// GWCATAT — app.js (Versi Disempurnakan)
+// GWCATAT — app.js (Arsitektur 5 Halaman & Shortcut Lengkap)
 // =============================================================
 
 // ===== CEK SESSION =====
@@ -8,7 +8,7 @@ if (!session) {
   window.location.href = 'login.html';
 }
 
-// User-specific storage key agar data tidak tertukar antar akun
+// User-specific storage key agar data terisolasi per akun
 const userStorageKey = session && session.email
   ? `gwcatat_${session.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`
   : 'gwcatat_transactions';
@@ -22,15 +22,21 @@ document.getElementById('logoutBtn')?.addEventListener('click', () => {
 // ===== STATE =====
 let currentMonth = currentMonthKey();
 let transactions = loadTransactions();
-let chartInstances = { pie: null, line: null, income: null, expense: null, report: null };
+let chartInstances = {
+  pie: null,
+  line: null,
+  income: null,
+  expense: null,
+  savings: null,
+  report: null
+};
 
-// Load transaksi dengan fallback data lama
+// Load transaksi dengan fallback
 function loadTransactions() {
   const userTx = localStorage.getItem(userStorageKey);
   if (userTx) {
     try { return JSON.parse(userTx) || []; } catch (e) {}
   }
-  // Fallback ke storage global bila baru migrasi
   const globalTx = localStorage.getItem('gwcatat_transactions');
   if (globalTx) {
     try {
@@ -46,22 +52,22 @@ function loadTransactions() {
 const CAT_INFO = {
   // Pemasukan
   pemasukan:   { label: 'Pemasukan Umum', pillar: 'income' },
-  uang_jajan:  { label: 'Uang Jajan', pillar: 'income' },
+  uang_jajan:  { label: 'Uang Jajan / Kiriman', pillar: 'income' },
   gaji:        { label: 'Gaji Pokok', pillar: 'income' },
   bonus:       { label: 'Bonus / THR', pillar: 'income' },
-  investasi:   { label: 'Hasil Investasi', pillar: 'income' },
+  investasi:   { label: 'Hasil Investasi / Usaha', pillar: 'income' },
 
-  // Pengeluaran: Kebutuhan Pokok (Target 50%)
+  // Pengeluaran: Kebutuhan Pokok (50%)
   kebutuhan:   { label: 'Kebutuhan Pokok', pillar: 'kebutuhan' },
   makan:       { label: 'Makan & Minum', pillar: 'kebutuhan' },
-  transport:   { label: 'Transportasi', pillar: 'kebutuhan' },
+  transport:   { label: 'Transportasi / Bensin', pillar: 'kebutuhan' },
   tagihan:     { label: 'Tagihan & Utilitas', pillar: 'kebutuhan' },
 
-  // Pengeluaran: Keinginan & Gaya Hidup (Target 30%)
+  // Pengeluaran: Keinginan & Gaya Hidup (30%)
   keinginan:   { label: 'Keinginan & Belanja', pillar: 'keinginan' },
-  hiburan:     { label: 'Hiburan & Liburan', pillar: 'keinginan' },
+  hiburan:     { label: 'Hiburan & Nongkrong', pillar: 'keinginan' },
 
-  // Pengeluaran / Alokasi: Tabungan & Investasi (Target 20%)
+  // Pengeluaran / Alokasi: Simpanan & Tabungan (20%)
   tabungan:    { label: 'Tabungan Masa Depan', pillar: 'tabungan' },
   darurat:     { label: 'Simpanan Dana Darurat', pillar: 'darurat' },
 
@@ -149,7 +155,7 @@ function setBadge(id, text, color) {
   }
 }
 
-// ===== MODAL LOGIC =====
+// ===== MODAL TRANSAKSI LOGIC =====
 let modalMode = 'in'; // 'in' or 'out'
 
 const modalOverlay  = document.getElementById('modalOverlay');
@@ -160,7 +166,6 @@ const modalDesc     = document.getElementById('modalDesc');
 const modalAmount   = document.getElementById('modalAmount');
 const modalClose    = document.getElementById('modalClose');
 const modalCategory = document.getElementById('modalCategory');
-
 const transactionForm = document.getElementById('transactionForm');
 
 if (modalAmount) formatAmountInput(modalAmount);
@@ -176,7 +181,7 @@ function openModal(mode, defaultCategory = null) {
   if (mode === 'in') {
     if (modalTitle) modalTitle.textContent = '+ Tambah Pendapatan';
     if (modalSubmit) {
-      modalSubmit.textContent = 'Simpan Pendapatan';
+      modalSubmit.textContent = 'Simpan Pendapatan (Enter)';
       modalSubmit.className = 'modal-submit income';
     }
     if (modalCategory) {
@@ -191,13 +196,20 @@ function openModal(mode, defaultCategory = null) {
       modalCategory.value = defaultCategory || 'pemasukan';
     }
   } else {
-    if (modalTitle) modalTitle.textContent = '− Tambah Pengeluaran';
+    const isSavings = defaultCategory === 'tabungan' || defaultCategory === 'darurat';
+    if (modalTitle) {
+      modalTitle.textContent = isSavings ? '★ Alokasi Tabungan & Simpanan' : '− Tambah Pengeluaran';
+    }
     if (modalSubmit) {
-      modalSubmit.textContent = 'Simpan Pengeluaran';
-      modalSubmit.className = 'modal-submit expense';
+      modalSubmit.textContent = isSavings ? 'Simpan Alokasi Tabungan (Enter)' : 'Simpan Pengeluaran (Enter)';
+      modalSubmit.className = isSavings ? 'modal-submit savings' : 'modal-submit expense';
     }
     if (modalCategory) {
       modalCategory.innerHTML = `
+        <optgroup label="Simpanan & Tabungan (20%)">
+          <option value="tabungan">Tabungan Masa Depan</option>
+          <option value="darurat">Simpanan Dana Darurat</option>
+        </optgroup>
         <optgroup label="Kebutuhan Pokok (50%)">
           <option value="makan">Makan & Minum</option>
           <option value="kebutuhan">Kebutuhan Harian</option>
@@ -209,17 +221,13 @@ function openModal(mode, defaultCategory = null) {
           <option value="hiburan">Hiburan & Nongkrong</option>
           <option value="lainnya">Lainnya</option>
         </optgroup>
-        <optgroup label="Simpanan & Aset (20%)">
-          <option value="tabungan">Tabungan Masa Depan</option>
-          <option value="darurat">Simpanan Dana Darurat</option>
-        </optgroup>
       `;
-      modalCategory.value = defaultCategory || 'makan';
+      modalCategory.value = defaultCategory || (isSavings ? defaultCategory : 'makan');
     }
   }
   modalOverlay.classList.add('open');
 
-  // Auto focus ke nominal agar user bisa langsung ketik dan tekan Enter
+  // Auto focus ke kolom nominal
   setTimeout(() => {
     if (modalAmount) modalAmount.focus();
   }, 100);
@@ -261,7 +269,7 @@ function submitTransaction() {
 
     saveData();
 
-    // Sinkronkan currentMonth ke bulan transaksi yang baru ditambahkan agar langsung terlihat
+    // Sinkronkan currentMonth ke bulan transaksi
     const txMonth = date.slice(0, 7);
     if (txMonth !== currentMonth) {
       currentMonth = txMonth;
@@ -289,7 +297,7 @@ if (transactionForm) {
   });
 }
 
-// Dukungan tombol Enter pada semua input modal
+// Tombol Enter pada input modal
 [modalDate, modalDesc, modalAmount, modalCategory].forEach(el => {
   el?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -298,20 +306,6 @@ if (transactionForm) {
     }
   });
 });
-
-// Dukungan tombol Escape untuk menutup modal
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (modalOverlay?.classList.contains('open')) closeModal();
-    if (document.getElementById('healthModalOverlay')?.classList.contains('open')) closeHealthModal();
-  }
-});
-
-// Tombol Quick Actions
-document.getElementById('btnIncome')?.addEventListener('click', () => openModal('in'));
-document.getElementById('btnExpense')?.addEventListener('click', () => openModal('out'));
-document.getElementById('btnIncomeTab')?.addEventListener('click', () => openModal('in'));
-document.getElementById('btnExpenseTab')?.addEventListener('click', () => openModal('out'));
 
 // ===== RENDER ALL =====
 function renderAll() {
@@ -323,25 +317,21 @@ function renderAll() {
   renderCharts(monthTx);
   renderIncomeList(monthTx);
   renderExpenseList(monthTx);
+  renderSavings(monthTx);
   renderCalendar(monthTx);
   renderHealthIndicators(monthTx);
   renderAllowance(monthTx);
   updateReport(monthTx);
 }
 
-// ===== SUMMARY CARDS =====
+// ===== 1. SUMMARY CARDS (BERANDA) =====
 function renderSummary(tx) {
   const totalIn = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
-  
-  // Pisahkan pengeluaran konsumtif vs tabungan/simpanan
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
   const totalSimpanan = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat'))
                           .reduce((s, t) => s + Number(t.amount), 0);
-  
-  // Sisa di Tangan (Uang Kas Nyata yang Belum Dibelanjakan / Belum Disetor ke Tabungan)
-  const sisaKas = totalIn - totalOut;
 
-  // Saldo Bersih (Net Worth): Sisa Kas Nyata + Akumulasi Pos Simpanan & Darurat yang Berhasil Disisihkan
+  const sisaKas = totalIn - totalOut;
   const totalWealth = Math.max(0, sisaKas) + totalSimpanan;
 
   const elIn = document.getElementById('totalIn');
@@ -362,12 +352,12 @@ function renderSummary(tx) {
   }
 }
 
-// ===== CHARTS =====
+// ===== 2. CHARTS (BERANDA, PENDAPATAN, PENGELUARAN) =====
 function renderCharts(tx) {
   const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
   const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
 
-  // 1. Pie Chart
+  // 1. Pie Chart Beranda
   const pieCtx = document.getElementById('pieChart');
   if (pieCtx) {
     chartInstances.pie = safeDestroy(chartInstances.pie);
@@ -386,15 +376,8 @@ function renderCharts(tx) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { font: { family: 'Inter', size: 12 } }
-            },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}`
-              }
-            }
+            legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } },
+            tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}` } }
           },
           cutout: '68%',
           animation: { duration: 300 }
@@ -403,7 +386,7 @@ function renderCharts(tx) {
     }
   }
 
-  // 2. Tren Harian (Line Chart)
+  // 2. Line Chart Tren Harian
   const days = {};
   tx.forEach(t => {
     if (t.date) {
@@ -427,7 +410,7 @@ function renderCharts(tx) {
         data: {
           labels,
           datasets: [
-            { label: 'Pendapatan', data: inData,  borderColor: '#5a9367', backgroundColor: 'rgba(90,147,103,0.08)',  fill: true, tension: 0.4, pointRadius: 3 },
+            { label: 'Pendapatan', data: inData, borderColor: '#5a9367', backgroundColor: 'rgba(90,147,103,0.08)', fill: true, tension: 0.4, pointRadius: 3 },
             { label: 'Pengeluaran', data: outData, borderColor: '#c0604a', backgroundColor: 'rgba(192,96,74,0.08)', fill: true, tension: 0.4, pointRadius: 3 }
           ]
         },
@@ -507,18 +490,25 @@ function renderCharts(tx) {
   }
 }
 
-// ===== LISTS =====
+// ===== 3. TRANSACTION LISTS =====
 function txItemHTML(t) {
   const isIn = t.type === 'in';
+  const isSavings = t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat');
   const catLabel = getCategoryLabel(t.category);
+  
+  let iconClass = isIn ? 'in' : (isSavings ? 'savings' : 'out');
+  let iconSymbol = isIn ? '↑' : (isSavings ? '★' : '↓');
+  let amountClass = isIn ? 'in' : (isSavings ? 'savings' : 'out');
+  let amountPrefix = isIn ? '+' : '−';
+
   return `
   <div class="tx-item">
-    <div class="tx-icon ${isIn ? 'in' : 'out'}">${isIn ? '↑' : '↓'}</div>
+    <div class="tx-icon ${iconClass}">${iconSymbol}</div>
     <div class="tx-info">
       <div class="tx-desc">${t.description || (isIn ? 'Pendapatan' : 'Pengeluaran')}</div>
       <div class="tx-date">${t.date} · <span style="font-weight:600">${catLabel}</span></div>
     </div>
-    <span class="tx-amount ${isIn ? 'in' : 'out'}">${isIn ? '+' : '−'}${fmtRp(t.amount)}</span>
+    <span class="tx-amount ${amountClass}">${amountPrefix}${fmtRp(t.amount)}</span>
     <button class="tx-del" data-id="${t.id}" title="Hapus transaksi">✕</button>
   </div>`;
 }
@@ -549,16 +539,134 @@ function renderIncomeList(tx) {
 function renderExpenseList(tx) {
   const list = document.getElementById('expenseList');
   if (!list) return;
-  const items = tx.filter(t => t.type === 'out').sort((a, b) => b.date.localeCompare(a.date));
+  // Tampilkan pengeluaran non-tabungan
+  const items = tx.filter(t => t.type === 'out' && getPillar(t.category) !== 'tabungan' && getPillar(t.category) !== 'darurat')
+                  .sort((a, b) => b.date.localeCompare(a.date));
   if (!items.length) {
-    list.innerHTML = '<div class="empty-state">Belum ada catatan pengeluaran bulan ini.</div>';
+    list.innerHTML = '<div class="empty-state">Belum ada catatan pengeluaran belanja bulan ini.</div>';
     return;
   }
   list.innerHTML = '<div class="tx-list">' + items.map(txItemHTML).join('') + '</div>';
   bindDeleteButtons();
 }
 
-// ===== TARGET UANG JAJAN (ALLOWANCE PROGRESS) =====
+// ===== 4. HALAMAN TABUNGAN (KHUSUS & DETAIL) =====
+function renderSavings(tx) {
+  const tabunganAmt = tx.filter(t => t.type === 'out' && getPillar(t.category) === 'tabungan').reduce((s, t) => s + Number(t.amount), 0);
+  const daruratAmt  = tx.filter(t => t.type === 'out' && getPillar(t.category) === 'darurat').reduce((s, t) => s + Number(t.amount), 0);
+  const totalSimpanan = tabunganAmt + daruratAmt;
+
+  const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
+  const totalOut = tx.filter(t => t.type === 'out').reduce((s, t) => s + Number(t.amount), 0);
+  const sisaKas  = totalIn - totalOut;
+  const totalWealth = Math.max(0, sisaKas) + totalSimpanan;
+
+  const effectiveSavings = totalSimpanan + Math.max(0, sisaKas);
+  const savingsRatio = totalIn > 0 ? (effectiveSavings / totalIn) * 100 : (totalSimpanan > 0 ? 100 : 0);
+
+  // Set ringkasan metrik tabungan
+  const elSavTab = document.getElementById('savPageTotalTabungan');
+  if (elSavTab) elSavTab.textContent = fmtRp(tabunganAmt);
+
+  const elSavDar = document.getElementById('savPageTotalDarurat');
+  if (elSavDar) elSavDar.textContent = fmtRp(daruratAmt);
+
+  const elSavWealth = document.getElementById('savPageTotalWealth');
+  if (elSavWealth) elSavWealth.textContent = fmtRp(totalWealth);
+
+  const elSavRatio = document.getElementById('savPageRatio');
+  if (elSavRatio) elSavRatio.textContent = Math.round(savingsRatio) + '%';
+
+  // Set 3 pilar card values
+  const elFutureAmt = document.getElementById('pillarFutureAmt');
+  if (elFutureAmt) elFutureAmt.textContent = fmtRp(tabunganAmt);
+
+  const elEmergAmt = document.getElementById('pillarEmergencyAmt');
+  if (elEmergAmt) elEmergAmt.textContent = fmtRp(daruratAmt);
+
+  const elInvestAmt = document.getElementById('pillarInvestAmt');
+  if (elInvestAmt) {
+    const investAmt = tx.filter(t => t.type === 'in' && t.category === 'investasi').reduce((s, t) => s + Number(t.amount), 0);
+    elInvestAmt.textContent = fmtRp(investAmt);
+  }
+
+  // Progress Bar Savings Goal
+  const goalInput = document.getElementById('savingsGoalInput');
+  const progressWrap = document.getElementById('savingsProgressWrap');
+  const usageText = document.getElementById('savingsUsageText');
+  const remainingText = document.getElementById('savingsRemainingText');
+  const progressBar = document.getElementById('savingsProgressBar');
+
+  if (goalInput && progressWrap) {
+    const target = parseRibuan(goalInput.value);
+    if (target > 0) {
+      progressWrap.style.display = 'block';
+      const percent = Math.round((totalSimpanan / target) * 100);
+      const remaining = target - totalSimpanan;
+
+      if (usageText) usageText.textContent = `Terkumpul: ${fmtRp(totalSimpanan)} / ${fmtRp(target)} (${percent}%)`;
+      if (remainingText) {
+        if (remaining <= 0) {
+          remainingText.textContent = `🎉 Target Tercapai! (+${fmtRp(Math.abs(remaining))})`;
+          remainingText.style.color = 'var(--green)';
+        } else {
+          remainingText.textContent = `Sisa Target: ${fmtRp(remaining)}`;
+          remainingText.style.color = 'var(--gold)';
+        }
+      }
+      if (progressBar) {
+        progressBar.style.width = Math.min(100, percent) + '%';
+        progressBar.style.background = percent >= 100 ? 'var(--green)' : 'var(--gold)';
+      }
+    } else {
+      progressWrap.style.display = 'none';
+    }
+  }
+
+  // Riwayat Pos Tabungan & Simpanan
+  const list = document.getElementById('savingsList');
+  if (list) {
+    const savingsItems = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'tabungan' || getPillar(t.category) === 'darurat'))
+                           .sort((a, b) => b.date.localeCompare(a.date));
+    if (!savingsItems.length) {
+      list.innerHTML = '<div class="empty-state">Belum ada alokasi tabungan atau dana darurat bulan ini.</div>';
+    } else {
+      list.innerHTML = '<div class="tx-list">' + savingsItems.map(txItemHTML).join('') + '</div>';
+      bindDeleteButtons();
+    }
+  }
+
+  // Savings Pie Chart
+  const savCtx = document.getElementById('savingsPieChart');
+  if (savCtx) {
+    chartInstances.savings = safeDestroy(chartInstances.savings);
+    if (tabunganAmt > 0 || daruratAmt > 0 || sisaKas > 0) {
+      chartInstances.savings = new Chart(savCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Tabungan Masa Depan', 'Dana Darurat', 'Sisa Kas Mengendap'],
+          datasets: [{
+            data: [tabunganAmt, daruratAmt, Math.max(0, sisaKas)],
+            backgroundColor: ['#C89B3C', '#264653', '#5a9367'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } },
+            tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}` } }
+          },
+          cutout: '62%',
+          animation: { duration: 300 }
+        }
+      });
+    }
+  }
+}
+
+// ===== 5. ALLOWANCE PROGRESS =====
 function renderAllowance(tx) {
   const allowanceInput = document.getElementById('allowanceInput');
   const progressWrap = document.getElementById('allowanceProgressWrap');
@@ -576,7 +684,6 @@ function renderAllowance(tx) {
 
   progressWrap.style.display = 'block';
 
-  // Hitung pengeluaran jajan (keinginan, hiburan, makan di luar)
   const spent = tx.filter(t => t.type === 'out' && (getPillar(t.category) === 'keinginan' || t.category === 'makan'))
                   .reduce((s, t) => s + Number(t.amount), 0);
 
@@ -599,17 +706,13 @@ function renderAllowance(tx) {
 
   if (progressBar) {
     progressBar.style.width = Math.min(100, Math.max(0, percent)) + '%';
-    if (percent > 100) {
-      progressBar.style.background = 'var(--red)';
-    } else if (percent > 75) {
-      progressBar.style.background = 'var(--gold)';
-    } else {
-      progressBar.style.background = 'var(--green)';
-    }
+    if (percent > 100) progressBar.style.background = 'var(--red)';
+    else if (percent > 75) progressBar.style.background = 'var(--gold)';
+    else progressBar.style.background = 'var(--green)';
   }
 }
 
-// ===== KALENDER TRANSAKSI =====
+// ===== 6. KALENDER TRANSAKSI =====
 function renderCalendar(tx) {
   const container = document.getElementById('calendarContainer');
   if (!container) return;
@@ -648,11 +751,10 @@ function renderCalendar(tx) {
 
 let currentCalculatedHealth = null;
 
-// ===== INDIKATOR KESEHATAN FINANSIAL (DISEMPURNAKAN & FAIR) =====
+// ===== 7. INDIKATOR KESEHATAN FINANSIAL =====
 function renderHealthIndicators(tx) {
   const totalIncome = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
   
-  // Pengeluaran per pilar 50/30/20
   const kebutuhanAmt = tx.filter(t => t.type === 'out' && getPillar(t.category) === 'kebutuhan').reduce((s, t) => s + Number(t.amount), 0);
   const keinginanAmt = tx.filter(t => t.type === 'out' && getPillar(t.category) === 'keinginan').reduce((s, t) => s + Number(t.amount), 0);
   const tabunganAmt  = tx.filter(t => t.type === 'out' && getPillar(t.category) === 'tabungan').reduce((s, t) => s + Number(t.amount), 0);
@@ -661,8 +763,7 @@ function renderHealthIndicators(tx) {
   const totalExpense = kebutuhanAmt + keinginanAmt + tabunganAmt + daruratAmt;
   const sisaKas      = totalIncome - totalExpense;
 
-  // 1. Rasio Tabungan (Savings Ratio)
-  // Menghargai tabungan yang disetor + sisa uang kas yang berhasil tidak dihabiskan
+  // 1. Rasio Tabungan
   const effectiveSavings = tabunganAmt + daruratAmt + Math.max(0, sisaKas);
   const savingsRatio = totalIncome > 0
     ? (effectiveSavings / totalIncome) * 100
@@ -676,8 +777,7 @@ function renderHealthIndicators(tx) {
   if (savValEl) savValEl.textContent = Math.round(savingsRatio) + '%';
   setBadge('savingsBadge', sv.label, sv.color);
 
-  // 2. Rasio Gaya Hidup (Lifestyle Ratio)
-  // Berapa porsi pendapatan yang dihabiskan untuk kebutuhan tersier/hiburan
+  // 2. Rasio Gaya Hidup
   const lifestyleRatio = totalIncome > 0
     ? (keinginanAmt / totalIncome) * 100
     : (totalExpense > 0 ? (keinginanAmt / totalExpense) * 100 : 0);
@@ -690,8 +790,7 @@ function renderHealthIndicators(tx) {
   if (lifeValEl) lifeValEl.textContent = Math.round(lifestyleRatio) + '%';
   setBadge('lifestyleBadge', ls.label, ls.color);
 
-  // 3. Rasio Likuiditas (Liquidity Ratio)
-  // Ketahanan cadangan uang cair terhadap pengeluaran rutin bulanan
+  // 3. Rasio Likuiditas
   const pengeluaranRutin = (kebutuhanAmt + keinginanAmt) || (totalIncome * 0.5) || 1;
   const danaLikuid = Math.max(0, sisaKas) + tabunganAmt;
   const liquidityMonths = totalExpense > 0
@@ -711,8 +810,7 @@ function renderHealthIndicators(tx) {
   }
   setBadge('liquidBadge', liq.label, liq.color);
 
-  // 4. Dana Darurat (Emergency Fund Progress)
-  // Target 6 bulan pengeluaran rutin
+  // 4. Dana Darurat Progress
   const targetEmergency = pengeluaranRutin * 6;
   const danaDaruratTotal = daruratAmt + (sisaKas > 0 ? sisaKas * 0.3 : 0);
   const emergencyRatio = Math.min(100, Math.round((danaDaruratTotal / targetEmergency) * 100));
@@ -725,7 +823,7 @@ function renderHealthIndicators(tx) {
   if (emValEl) emValEl.textContent = Math.round(emergencyRatio) + '%';
   setBadge('emergencyBadge', em.label, em.color);
 
-  // 5. Skor Literasi Finansial & Level XP (Fair scoring)
+  // 5. Skor Literasi Finansial
   const scoreSavings = Math.min(100, (savingsRatio / 20) * 100);
   const scoreLifestyle = lifestyleRatio <= 30 ? 100 : Math.max(0, 100 - (lifestyleRatio - 30) * 3);
   const scoreLiquidity = Math.min(100, (liquidityMonths / 3) * 100);
@@ -758,49 +856,49 @@ function renderHealthIndicators(tx) {
   };
 }
 
-// ===== POPUP DETAIL EDUKASI INDIKATOR =====
+// ===== POPUP EDUKASI FINANSIAL =====
 const popInfo = {
   savings: {
     title: "1. Rasio Tabungan (Savings Ratio)",
     getVal: (r) => `${Math.round(r.savingsRatio)}%`,
     badgeText: (r) => r.sv.label,
     badgeColor: (r) => r.sv.color,
-    desc: "Menghitung persentase tabungan yang disetor serta sisa kas positif yang berhasil kamu amankan bulan ini. Minimal 20% dari pendapatan wajib disisihkan untuk masa depan.",
+    desc: "Menghitung tabungan yang disetor serta sisa kas positif yang diamankan. Minimal 20% dari pendapatan wajib disisihkan untuk masa depan.",
     formula: "(Tabungan Disetor + Sisa Kas Positif) / Pendapatan × 100%",
     thresholds: [
-      { text: "≥ 20% — Sehat (Memenuhi Kaidah 50/30/20)", color: "#5a9367" },
-      { text: "10% – 19% — Kurang (Perlu Ditingkatkan)", color: "#C89B3C" },
-      { text: "< 10% — Bahaya (Rentan Krisis Finansial)", color: "#c0604a" }
+      { text: "≥ 20% — Sehat (Kaidah 50/30/20)", color: "#5a9367" },
+      { text: "10% – 19% — Kurang", color: "#C89B3C" },
+      { text: "< 10% — Bahaya", color: "#c0604a" }
     ],
     refs: ["Kaidah 50/30/20 (Elizabeth Warren)", "CFP Board (Certified Financial Planner)"],
-    tab: 'pengeluaran', category: 'tabungan', btnText: "Tambah Alokasi Tabungan"
+    tab: 'tabungan', category: 'tabungan', btnText: "Ke Halaman Tabungan"
   },
   lifestyle: {
     title: "2. Rasio Gaya Hidup (Lifestyle Ratio)",
     getVal: (r) => `${Math.round(r.lifestyleRatio)}%`,
     badgeText: (r) => r.ls.label,
     badgeColor: (r) => r.ls.color,
-    desc: "Mengukur pengeluaran kategori keinginan, hiburan, dan belanja tersier. Maksimal 30% dari pendapatan agar tidak terjadi self-sabotage keuangan.",
+    desc: "Mengukur pengeluaran keinginan, hiburan, dan belanja tersier. Maksimal 30% dari pendapatan agar tidak terjadi self-sabotage keuangan.",
     formula: "Pengeluaran Keinginan & Hiburan / Pendapatan × 100%",
     thresholds: [
-      { text: "≤ 30% — Terkendali (Kondisi Ideal)", color: "#5a9367" },
-      { text: "31% – 45% — Waspada (Mulai Melebihi Batas)", color: "#C89B3C" },
-      { text: "> 45% — Boros (Gaya Hidup Berlebih)", color: "#c0604a" }
+      { text: "≤ 30% — Terkendali", color: "#5a9367" },
+      { text: "31% – 45% — Waspada", color: "#C89B3C" },
+      { text: "> 45% — Boros", color: "#c0604a" }
     ],
     refs: ["Pedoman Otoritas Jasa Keuangan (OJK)", "The 50/30/20 Budgeting Rule"],
-    tab: 'pengeluaran', category: 'keinginan', btnText: "Evaluasi Pengeluaran Keinginan"
+    tab: 'pengeluaran', category: 'keinginan', btnText: "Evaluasi Pengeluaran"
   },
   liquidity: {
     title: "3. Rasio Likuiditas (Liquidity Ratio)",
     getVal: (r) => isFinite(r.liquidityMonths) ? (r.liquidityMonths >= 10 ? '9.9+×' : `${r.liquidityMonths.toFixed(1)}×`) : '∞',
     badgeText: (r) => r.liq.label,
     badgeColor: (r) => r.liq.color,
-    desc: "Menghitung berapa bulan pengeluaran rutin yang sanggup ditopang oleh sisa uang kas dan tabunganmu saat ini jika pemasukan tiba-tiba berhenti.",
+    desc: "Berapa bulan pengeluaran rutin yang sanggup ditopang oleh sisa uang kas dan tabunganmu saat ini jika pemasukan tiba-tiba berhenti.",
     formula: "(Sisa Kas + Tabungan) / Pengeluaran Rutin Bulanan",
     thresholds: [
-      { text: "≥ 3× Bulan — Aman (Cadangan Ideal)", color: "#5a9367" },
-      { text: "1× – 2.9× Bulan — Rawan (Perlu Tambahan)", color: "#C89B3C" },
-      { text: "< 1× Bulan — Defisit (Sangat Rentan)", color: "#c0604a" }
+      { text: "≥ 3× Bulan — Aman", color: "#5a9367" },
+      { text: "1× – 2.9× Bulan — Rawan", color: "#C89B3C" },
+      { text: "< 1× Bulan — Defisit", color: "#c0604a" }
     ],
     refs: ["CFP Board Standards", "Standard Financial Planning Benchmarks"],
     tab: 'beranda', section: 'summary-grid', btnText: "Lihat Saldo Kas di Beranda"
@@ -813,12 +911,12 @@ const popInfo = {
     desc: "Progres pemenuhan dana darurat setara 6 bulan pengeluaran rutin sebagai jaring pengaman saat terjadi hal tidak terduga.",
     formula: "Simpanan Darurat / (Pengeluaran Bulanan × 6) × 100%",
     thresholds: [
-      { text: "≥ 100% — Terpenuhi (Bantalan Krisis Siap)", color: "#5a9367" },
-      { text: "40% – 99% — Menuju Target (On Track)", color: "#C89B3C" },
-      { text: "< 40% — Mulai Kumpulkan (Prioritaskan)", color: "#c0604a" }
+      { text: "≥ 100% — Terpenuhi", color: "#5a9367" },
+      { text: "40% – 99% — Menuju Target", color: "#C89B3C" },
+      { text: "< 40% — Mulai Kumpulkan", color: "#c0604a" }
     ],
     refs: ["Perencana Keuangan Independen", "OJK Edukasi Finansial"],
-    tab: 'pengeluaran', category: 'darurat', btnText: "Isi Simpanan Dana Darurat"
+    tab: 'tabungan', category: 'darurat', btnText: "Buka Pos Dana Darurat"
   },
   literacy: {
     title: "5. Skor Literasi Keuangan & Gamifikasi",
@@ -834,7 +932,7 @@ const popInfo = {
       { text: "21–40 — Lv.2 Belajar Hemat", color: "#C89B3C" },
       { text: "0–20 — Lv.1 Pemula Boros", color: "#c0604a" }
     ],
-    refs: ["Survei Nasional Literasi dan Inklusi Keuangan (SNLIK OJK)", "OECD Financial Literacy Framework"],
+    refs: ["Survei Nasional Literasi Keuangan (SNLIK OJK)", "OECD Financial Literacy Framework"],
     tab: 'beranda', section: 'healthGrid', btnText: "Lihat Indikator Lengkap"
   }
 };
@@ -891,8 +989,7 @@ function openHealthModal(id) {
       if (info.category) {
         openModal('out', info.category);
       } else if (info.tab) {
-        const navBtn = document.querySelector(`[data-tab="${info.tab}"]`);
-        if (navBtn) navBtn.click();
+        switchTab(info.tab);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -905,7 +1002,7 @@ function closeHealthModal() {
   if (overlay) overlay.classList.remove('open');
 }
 
-// ===== LAPORAN KEUANGAN (AKURAT & PROPOSIONAL) =====
+// ===== 8. LAPORAN KEUANGAN =====
 function updateReport(tx) {
   try {
     const totalIn  = tx.filter(t => t.type === 'in').reduce((s, t) => s + Number(t.amount), 0);
@@ -913,7 +1010,6 @@ function updateReport(tx) {
     const diff     = totalIn - totalOut;
     const count    = tx.length;
 
-    // Rata-rata pengeluaran harian yang realistis
     const [y, m] = currentMonth.split('-').map(Number);
     const now = new Date();
     let daysCount = new Date(y, m, 0).getDate();
@@ -988,21 +1084,67 @@ function updateReport(tx) {
   }
 }
 
-// ===== NAVIGASI TAB =====
-document.querySelectorAll('.nav-btn').forEach(btn => {
+// ===== 9. NAVIGASI 5 HALAMAN =====
+const PAGE_TITLES = {
+  beranda:     'Beranda',
+  pendapatan:  'Pendapatan & Arus Masuk',
+  pengeluaran: 'Pengeluaran & Belanja',
+  tabungan:    'Manajemen Tabungan & Masa Depan',
+  laporan:     'Laporan Keuangan & Statistik'
+};
+
+function switchTab(tabName) {
+  if (!tabName) return;
+  
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+
+  document.querySelectorAll('.tab-content').forEach(el => {
+    el.classList.toggle('active', el.id === 'tab-' + tabName);
+  });
+
+  const titleEl = document.getElementById('pageTitleIndicator');
+  if (titleEl && PAGE_TITLES[tabName]) {
+    titleEl.textContent = PAGE_TITLES[tabName];
+  }
+
+  // Update specific page data if needed
+  const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
+  if (tabName === 'tabungan') renderSavings(monthTx);
+  if (tabName === 'laporan') updateReport(monthTx);
+
+  // Close mobile sidebar
+  closeMobileSidebar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', function () {
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
     const tab = this.dataset.tab;
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    const targetTab = document.getElementById('tab-' + tab);
-    if (targetTab) targetTab.classList.add('active');
-    if (tab === 'laporan') updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    switchTab(tab);
   });
 });
 
-// ===== NAVIGASI BULAN =====
+// Mobile Sidebar Drawer
+const appSidebar = document.getElementById('appSidebar');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+function openMobileSidebar() {
+  appSidebar?.classList.add('open');
+  sidebarBackdrop?.classList.add('open');
+}
+
+function closeMobileSidebar() {
+  appSidebar?.classList.remove('open');
+  sidebarBackdrop?.classList.remove('open');
+}
+
+mobileMenuBtn?.addEventListener('click', openMobileSidebar);
+sidebarBackdrop?.addEventListener('click', closeMobileSidebar);
+
+// ===== 10. NAVIGASI BULAN =====
 document.getElementById('prevMonth')?.addEventListener('click', () => {
   const [y, m] = currentMonth.split('-').map(Number);
   currentMonth = (m === 1) ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0');
@@ -1015,7 +1157,7 @@ document.getElementById('nextMonth')?.addEventListener('click', () => {
   renderAll();
 });
 
-// ===== ALLOWANCE TARGET EVENT =====
+// ===== 11. SAVINGS GOAL & ALLOWANCE EVENT =====
 const allowanceInput = document.getElementById('allowanceInput');
 if (allowanceInput) {
   formatAmountInput(allowanceInput);
@@ -1027,7 +1169,89 @@ if (allowanceInput) {
   });
 }
 
-// ===== EKSPOR & IMPOR DATA CADANGAN =====
+const savingsGoalInput = document.getElementById('savingsGoalInput');
+if (savingsGoalInput) {
+  formatAmountInput(savingsGoalInput);
+  savingsGoalInput.value = localStorage.getItem('gwcatat_savings_goal') || '';
+  savingsGoalInput.addEventListener('input', () => {
+    localStorage.setItem('gwcatat_savings_goal', savingsGoalInput.value);
+    const monthTx = transactions.filter(t => t.date && t.date.startsWith(currentMonth));
+    renderSavings(monthTx);
+  });
+}
+
+// ===== 12. SHORTCUTS MODAL =====
+const shortcutModalOverlay = document.getElementById('shortcutModalOverlay');
+function openShortcutModal() {
+  shortcutModalOverlay?.classList.add('open');
+}
+function closeShortcutModal() {
+  shortcutModalOverlay?.classList.remove('open');
+}
+
+document.getElementById('btnShortcutGuide')?.addEventListener('click', openShortcutModal);
+document.getElementById('shortcutModalClose')?.addEventListener('click', closeShortcutModal);
+document.getElementById('shortcutModalDone')?.addEventListener('click', closeShortcutModal);
+if (shortcutModalOverlay) {
+  shortcutModalOverlay.addEventListener('click', (e) => {
+    if (e.target === shortcutModalOverlay) closeShortcutModal();
+  });
+}
+
+// ===== 13. GLOBAL KEYBOARD SHORTCUTS HANDLER =====
+window.addEventListener('keydown', (e) => {
+  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+  const isInputActive = activeTag === 'input' || activeTag === 'select' || activeTag === 'textarea';
+
+  // Modal Escape key
+  if (e.key === 'Escape') {
+    if (modalOverlay?.classList.contains('open')) closeModal();
+    if (document.getElementById('healthModalOverlay')?.classList.contains('open')) closeHealthModal();
+    if (shortcutModalOverlay?.classList.contains('open')) closeShortcutModal();
+    closeMobileSidebar();
+    return;
+  }
+
+  // Alt + Number (1-5) untuk pindah halaman
+  if (e.altKey) {
+    if (e.key === '1') { e.preventDefault(); switchTab('beranda'); return; }
+    if (e.key === '2') { e.preventDefault(); switchTab('pendapatan'); return; }
+    if (e.key === '3') { e.preventDefault(); switchTab('pengeluaran'); return; }
+    if (e.key === '4') { e.preventDefault(); switchTab('tabungan'); return; }
+    if (e.key === '5') { e.preventDefault(); switchTab('laporan'); return; }
+    if (e.key.toLowerCase() === 'i') { e.preventDefault(); openModal('in'); return; }
+    if (e.key.toLowerCase() === 'e') { e.preventDefault(); openModal('out'); return; }
+    if (e.key.toLowerCase() === 's') { e.preventDefault(); openModal('out', 'tabungan'); return; }
+    if (e.key.toLowerCase() === 'k') { e.preventDefault(); openShortcutModal(); return; }
+  }
+
+  // Quick single key shortcut ketika user tidak sedang mengetik di input
+  if (!isInputActive && !modalOverlay?.classList.contains('open')) {
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      openModal('in');
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      openModal('out');
+    }
+  }
+});
+
+// ===== 14. TOMBOL-TOMBOL AKSI CEPAT =====
+document.getElementById('btnIncome')?.addEventListener('click', () => openModal('in'));
+document.getElementById('btnExpense')?.addEventListener('click', () => openModal('out'));
+document.getElementById('btnSavingsAction')?.addEventListener('click', () => openModal('out', 'tabungan'));
+
+document.getElementById('btnSideIncome')?.addEventListener('click', () => openModal('in'));
+document.getElementById('btnSideExpense')?.addEventListener('click', () => openModal('out'));
+document.getElementById('btnSideSavings')?.addEventListener('click', () => openModal('out', 'tabungan'));
+
+document.getElementById('btnIncomeTab')?.addEventListener('click', () => openModal('in'));
+document.getElementById('btnExpenseTab')?.addEventListener('click', () => openModal('out'));
+document.getElementById('btnSavingsTab')?.addEventListener('click', () => openModal('out', 'tabungan'));
+document.getElementById('btnEmergencyTab')?.addEventListener('click', () => openModal('out', 'darurat'));
+
+// ===== 15. EKSPOR & IMPOR DATA CADANGAN =====
 document.getElementById('exportBtn')?.addEventListener('click', () => {
   const dataStr = JSON.stringify(transactions, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
@@ -1071,7 +1295,18 @@ importFileInput?.addEventListener('change', (e) => {
   reader.readAsText(file);
 });
 
-// ===== INIT =====
+// ===== 16. REPORT FILTERS =====
+document.getElementById('reportPeriod')?.addEventListener('change', () => {
+  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)));
+});
+document.getElementById('reportDate')?.addEventListener('change', () => {
+  updateReport(transactions.filter(t => t.date && t.date.startsWith(currentMonth)));
+});
+if (document.getElementById('reportDate')) {
+  document.getElementById('reportDate').value = new Date().toISOString().slice(0, 10);
+}
+
+// ===== 17. INIT =====
 function init() {
   renderAll();
 
