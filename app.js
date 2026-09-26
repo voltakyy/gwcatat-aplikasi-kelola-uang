@@ -3,14 +3,14 @@
 // =============================================================
 
 // ===== CEK SESSION =====
-const session = JSON.parse(localStorage.getItem('gwcatat_session') || 'null');
+const session = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
 if (!session) {
   window.location.href = 'login.html';
 }
 
 // ===== LOGOUT =====
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
-  localStorage.removeItem('gwcatat_session')
+  sessionStorage.removeItem('gwcatat_session')
   window.location.href = 'login.html'
 })
 
