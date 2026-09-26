@@ -3,270 +3,654 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>gwcatat — Dashboard</title>
-  <meta name="description" content="Catat pendapatan dan pengeluaran harian kamu dengan mudah." />
+  <title>gwcatat — Catatan & Manajemen Keuangan Pribadi</title>
+  <meta name="description" content="Aplikasi pencatatan keuangan pribadi dengan indikator kesehatan finansial dan manajemen tabungan cerdas." />
+  <script>
+    try {
+      const appSession = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
+      if (!appSession || !appSession.email) window.location.replace('login.html');
+    } catch (error) {
+      sessionStorage.removeItem('gwcatat_session');
+      window.location.replace('login.html');
+    }
+  </script>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-<div id="app">
+<div class="app-layout">
 
-  <!-- ===== HEADER ===== -->
-  <header class="app-header">
-    <div class="brand">
-      <div class="brand-logo">
-        <svg viewBox="0 0 40 40" width="22" height="22" stroke="#C89B3C" fill="none" stroke-width="2.4">
+  <!-- ===== SIDEBAR BACKDROP (MOBILE) ===== -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+  <!-- ===== SIDEBAR KIRI (5 HALAMAN UTAMA) ===== -->
+  <aside id="appSidebar" class="app-sidebar">
+    
+    <!-- Brand Logo -->
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 40 40" width="24" height="24" stroke="#C89B3C" fill="none" stroke-width="2.4">
           <circle cx="20" cy="20" r="17" />
           <path d="M13 28 L13 13 L20 22 L27 13 L27 28" />
           <path d="M20 22 L20 28" />
         </svg>
       </div>
       <div>
-        <div class="brand-name">gwcatat</div>
-        <div class="brand-sub">Semua uang punya cerita.</div>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="month-nav">
-        <button id="prevMonth" aria-label="Bulan sebelumnya">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <span id="monthLabel">Jan 2025</span>
-        <button id="nextMonth" aria-label="Bulan berikutnya">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-      <button id="logoutBtn" class="btn-logout">Keluar</button>
-    </div>
-  </header>
-
-  <!-- ===== NAVIGASI ===== -->
-  <nav class="app-nav">
-    <button data-tab="beranda" class="nav-btn active">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      Beranda
-    </button>
-    <button data-tab="pendapatan" class="nav-btn">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-      Pendapatan
-    </button>
-    <button data-tab="pengeluaran" class="nav-btn">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-      Pengeluaran
-    </button>
-    <button data-tab="laporan" class="nav-btn">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      Laporan
-    </button>
-  </nav>
-
-  <!-- ===================== TAB: BERANDA ===================== -->
-  <div id="tab-beranda" class="tab-content active">
-
-    <!-- Ringkasan -->
-    <div class="summary-grid">
-      <div class="summary-card">
-        <div class="label">Pendapatan</div>
-        <div id="totalIn" class="value" style="color:var(--green)">Rp0</div>
-      </div>
-      <div class="summary-card">
-        <div class="label">Pengeluaran</div>
-        <div id="totalOut" class="value" style="color:var(--red)">Rp0</div>
-      </div>
-      <div class="summary-card gold">
-        <div class="label">Sisa di Tangan</div>
-        <div id="sisaSaldo" class="value">Rp0</div>
-      </div>
-      <div class="summary-card dark">
-        <div class="label">Saldo Bersih</div>
-        <div id="totalWealth" class="value">Rp0</div>
+        <div class="sidebar-brand-name">gwcatat</div>
+        <div class="sidebar-brand-sub">Semua uang punya cerita.</div>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <button id="btnIncome" class="btn-income">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
-        Tambah Pendapatan
+    <!-- 5 Navigasi Halaman Terpisah -->
+    <nav class="sidebar-nav">
+      
+      <!-- 1. Beranda -->
+      <button data-tab="beranda" class="nav-item active" title="Shortcut: Alt+1">
+        <div class="nav-item-left">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          <span>Beranda</span>
+        </div>
+        <kbd class="kbd-hint">Alt+1</kbd>
       </button>
-      <button id="btnExpense" class="btn-expense">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
-        Tambah Pengeluaran
+
+      <!-- 2. Pendapatan -->
+      <button data-tab="pendapatan" class="nav-item" title="Shortcut: Alt+2">
+        <div class="nav-item-left">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          <span>Pendapatan</span>
+        </div>
+        <kbd class="kbd-hint">Alt+2</kbd>
+      </button>
+
+      <!-- 3. Pengeluaran -->
+      <button data-tab="pengeluaran" class="nav-item" title="Shortcut: Alt+3">
+        <div class="nav-item-left">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+          </svg>
+          <span>Pengeluaran</span>
+        </div>
+        <kbd class="kbd-hint">Alt+3</kbd>
+      </button>
+
+      <!-- 4. Tabungan (HALAMAN BARU) -->
+      <button data-tab="tabungan" class="nav-item" title="Shortcut: Alt+4">
+        <div class="nav-item-left">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Tabungan</span>
+        </div>
+        <kbd class="kbd-hint">Alt+4</kbd>
+      </button>
+
+      <!-- 5. Laporan -->
+      <button data-tab="laporan" class="nav-item" title="Shortcut: Alt+5">
+        <div class="nav-item-left">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span>Laporan</span>
+        </div>
+        <kbd class="kbd-hint">Alt+5</kbd>
+      </button>
+
+    </nav>
+
+    <!-- Sidebar Quick Actions -->
+    <div class="sidebar-actions">
+      <button id="btnSideIncome" class="sidebar-action-btn income" title="Shortcut: Alt+I">
+        <span>+ Pendapatan</span>
+        <kbd class="kbd-hint" style="background:rgba(255,255,255,0.2);color:#fff;border:none">Alt+I</kbd>
+      </button>
+      <button id="btnSideExpense" class="sidebar-action-btn expense" title="Shortcut: Alt+E">
+        <span>− Pengeluaran</span>
+        <kbd class="kbd-hint" style="background:rgba(255,255,255,0.2);color:#fff;border:none">Alt+E</kbd>
+      </button>
+      <button id="btnSideSavings" class="sidebar-action-btn savings" title="Shortcut: Alt+S">
+        <span>★ Tabung Dana</span>
+        <kbd class="kbd-hint" style="background:rgba(255,255,255,0.2);color:#fff;border:none">Alt+S</kbd>
       </button>
     </div>
 
-    <!-- Grafik -->
-    <div class="charts-grid">
-      <div class="card">
-        <div class="card-title">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-          Perbandingan
-        </div>
-        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <button id="btnShortcutGuide" class="btn-sidebar-sm" title="Panduan Shortcut Keyboard (Alt+K)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+        </svg>
+        <span>Keyboard Shortcuts</span>
+      </button>
+      <div class="sidebar-footer-links">
+        <button id="exportBtn" class="btn-sidebar-sm" title="Cadangkan Data Transaksi">Ekspor</button>
+        <button id="importBtn" class="btn-sidebar-sm" title="Pulihkan Data Transaksi">Impor</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" />
       </div>
-      <div class="card">
-        <div class="card-title">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-          Tren Harian
-        </div>
-        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
-      </div>
+      <button id="logoutBtn" class="btn-sidebar-sm" style="color:var(--red);border-color:rgba(192,96,74,0.3)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span>Keluar</span>
+      </button>
     </div>
 
-    <!-- Indikator Kesehatan -->
-    <div class="card">
-      <div class="card-title">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        Indikator Kesehatan
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="app-main">
+
+    <!-- Topbar (Header Konten) -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Buka Menu">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <h1 id="pageTitleIndicator" class="page-badge-title">Beranda</h1>
       </div>
-      <div class="health-grid" id="healthGrid">
-        <div class="health-item" id="cardSavings" title="Klik untuk rumus & referensi">
-          <div class="ring" id="ringSavings"><div class="ring-inner mono" id="savingsValue">0%</div></div>
-          <div class="health-label">Tabungan</div>
-          <span class="badge" id="savingsBadge">-</span>
-          <span class="click-hint">Rumus & Ref ➔</span>
+
+      <div class="topbar-right">
+        <div class="month-nav">
+          <button id="prevMonth" aria-label="Bulan sebelumnya">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span id="monthLabel">Bulan Ini</span>
+          <button id="nextMonth" aria-label="Bulan berikutnya">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
-        <div class="health-item" id="cardLifestyle" title="Klik untuk rumus & referensi">
-          <div class="ring" id="ringLifestyle"><div class="ring-inner mono" id="lifestyleValue">0%</div></div>
-          <div class="health-label">Gaya Hidup</div>
-          <span class="badge" id="lifestyleBadge">-</span>
-          <span class="click-hint">Rumus & Ref ➔</span>
+      </div>
+    </header>
+
+    <!-- =============================================================
+         HALAMAN 1: BERANDA (OVERVIEW & METRICS)
+         ============================================================= -->
+    <div id="tab-beranda" class="tab-content active">
+
+      <!-- 4 Kartu Ringkasan Finansial -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label">Total Pendapatan</div>
+          <div id="totalIn" class="value" style="color:var(--green)">Rp0</div>
         </div>
-        <div class="health-item" id="cardLiquidity" title="Klik untuk rumus & referensi">
-          <div class="tank"><div class="tank-fill mono" id="tankFill" style="height:8%"></div></div>
-          <div class="health-label">Likuiditas</div>
-          <span class="badge" id="liquidBadge">-</span>
-          <span class="click-hint">Rumus & Ref ➔</span>
+        <div class="summary-card">
+          <div class="label">Total Pengeluaran</div>
+          <div id="totalOut" class="value" style="color:var(--red)">Rp0</div>
         </div>
-        <div class="health-item" id="cardEmergency" title="Klik untuk rumus & referensi">
-          <div class="ring" id="ringEmergency"><div class="ring-inner mono" id="emergencyValue">0%</div></div>
-          <div class="health-label">Dana Darurat</div>
-          <span class="badge" id="emergencyBadge">-</span>
-          <span class="click-hint">Rumus & Ref ➔</span>
+        <div class="summary-card gold">
+          <div class="label">Sisa di Tangan (Kas)</div>
+          <div id="sisaSaldo" class="value">Rp0</div>
         </div>
-        <div class="health-item" id="cardLiteracy" title="Klik untuk rumus & referensi">
-          <div class="level-box">
-            <span class="lv mono" id="levelValue">Lv.1</span>
-            <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+        <div class="summary-card dark">
+          <div class="label">Saldo Bersih (Aset)</div>
+          <div id="totalWealth" class="value">Rp0</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Utama -->
+      <div class="quick-actions">
+        <button id="btnIncome" class="btn-income" title="Shortcut: Alt+I">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
+          Tambah Pendapatan
+        </button>
+        <button id="btnExpense" class="btn-expense" title="Shortcut: Alt+E">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
+          Tambah Pengeluaran
+        </button>
+        <button id="btnSavingsAction" class="btn-savings" title="Shortcut: Alt+S">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Alokasi Tabungan
+        </button>
+      </div>
+
+      <!-- Grafik Komparasi & Tren Harian -->
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+              <span>Perbandingan Arus Kas</span>
+            </div>
           </div>
-          <div class="health-label">Literasi</div>
-          <span style="font-size:10px;color:var(--muted)" id="literacyTitle">-</span>
-          <span class="click-hint">Rumus & Ref ➔</span>
+          <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              <span>Tren Arus Kas Harian</span>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
         </div>
       </div>
-    </div>
 
-    <!-- Kalender -->
-    <div class="card">
-      <div class="card-title">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Kalender
+      <!-- Indikator Kesehatan Finansial (CFP / Kaidah 50-30-20) -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Indikator Kesehatan Finansial</span>
+          </div>
+          <span style="font-size:11px;color:var(--muted);font-weight:500">Klik kartu untuk detail rumus</span>
+        </div>
+        <div class="health-grid" id="healthGrid">
+          <div class="health-item" id="cardSavings" title="Klik untuk rumus & referensi">
+            <div class="ring" id="ringSavings"><div class="ring-inner mono" id="savingsValue">0%</div></div>
+            <div class="health-label">Tabungan</div>
+            <span class="badge" id="savingsBadge">-</span>
+            <span class="click-hint">Rumus & Ref ➔</span>
+          </div>
+          <div class="health-item" id="cardLifestyle" title="Klik untuk rumus & referensi">
+            <div class="ring" id="ringLifestyle"><div class="ring-inner mono" id="lifestyleValue">0%</div></div>
+            <div class="health-label">Gaya Hidup</div>
+            <span class="badge" id="lifestyleBadge">-</span>
+            <span class="click-hint">Rumus & Ref ➔</span>
+          </div>
+          <div class="health-item" id="cardLiquidity" title="Klik untuk rumus & referensi">
+            <div class="tank"><div class="tank-fill mono" id="tankFill" style="height:8%"></div></div>
+            <div class="health-label">Likuiditas</div>
+            <span class="badge" id="liquidBadge">-</span>
+            <span class="click-hint">Rumus & Ref ➔</span>
+          </div>
+          <div class="health-item" id="cardEmergency" title="Klik untuk rumus & referensi">
+            <div class="ring" id="ringEmergency"><div class="ring-inner mono" id="emergencyValue">0%</div></div>
+            <div class="health-label">Dana Darurat</div>
+            <span class="badge" id="emergencyBadge">-</span>
+            <span class="click-hint">Rumus & Ref ➔</span>
+          </div>
+          <div class="health-item" id="cardLiteracy" title="Klik untuk rumus & referensi">
+            <div class="level-box">
+              <span class="lv mono" id="levelValue">Lv.1</span>
+              <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+            </div>
+            <div class="health-label">Skor Literasi</div>
+            <span style="font-size:10px;color:var(--muted);font-weight:700" id="literacyTitle">-</span>
+            <span class="click-hint">Rumus & Ref ➔</span>
+          </div>
+        </div>
       </div>
-      <div id="calendarContainer" class="calendar-grid"></div>
-      <div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center" id="calendarSummary">Klik tanggal untuk melihat detail</div>
-    </div>
 
-  </div><!-- /tab-beranda -->
+      <!-- Kalender Transaksi Interaktif -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span>Kalender Transaksi Bulanan</span>
+          </div>
+        </div>
+        <div id="calendarContainer" class="calendar-grid"></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center;font-weight:600" id="calendarSummary">Klik tanggal untuk melihat detail transaksi</div>
+      </div>
 
-  <!-- ===================== TAB: PENDAPATAN ===================== -->
-  <div id="tab-pendapatan" class="tab-content">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <h2 class="section-title">Pendapatan</h2>
-      <button id="btnIncomeTab" class="btn-income" style="padding:9px 18px;font-size:13px">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
-        Tambah
-      </button>
-    </div>
-    <div class="card">
-      <div class="card-title">Grafik Pendapatan</div>
-      <div class="chart-wrap"><canvas id="incomeLineChart"></canvas></div>
-    </div>
-    <div id="incomeList"></div>
-  </div>
+    </div><!-- /tab-beranda -->
 
-  <!-- ===================== TAB: PENGELUARAN ===================== -->
-  <div id="tab-pengeluaran" class="tab-content">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <h2 class="section-title">Pengeluaran</h2>
-      <button id="btnExpenseTab" class="btn-expense" style="padding:9px 18px;font-size:13px">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
-        Tambah
-      </button>
-    </div>
-    <div class="allowance-bar">
-      <label for="allowanceInput">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-        Target Uang Jajan
-      </label>
-      <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" />
-      <span style="font-size:11px;color:var(--muted)">(sebagai panduan)</span>
-    </div>
-    <div class="card">
-      <div class="card-title">Grafik Pengeluaran</div>
-      <div class="chart-wrap"><canvas id="expenseLineChart"></canvas></div>
-    </div>
-    <div id="expenseList"></div>
-  </div>
 
-  <!-- ===================== TAB: LAPORAN ===================== -->
-  <div id="tab-laporan" class="tab-content">
-    <h2 class="section-title">Laporan Keuangan</h2>
-    <div class="filter-row">
-      <label for="reportPeriod">Periode</label>
-      <select id="reportPeriod">
-        <option value="minggu">Mingguan</option>
-        <option value="bulan" selected>Bulanan</option>
-        <option value="tahun">Tahunan</option>
-      </select>
-      <label for="reportDate">Tanggal</label>
-      <input type="date" id="reportDate" />
-    </div>
-    <div class="report-stats">
-      <div class="rstat"><div class="rl">Total Pendapatan</div><div class="rv" id="repTotalIn" style="color:var(--green)">Rp0</div></div>
-      <div class="rstat"><div class="rl">Total Pengeluaran</div><div class="rv" id="repTotalOut" style="color:var(--red)">Rp0</div></div>
-      <div class="rstat"><div class="rl">Selisih</div><div class="rv" id="repDiff">Rp0</div></div>
-      <div class="rstat"><div class="rl">Rata-rata Harian</div><div class="rv" id="repAvg">Rp0</div></div>
-      <div class="rstat"><div class="rl">Transaksi</div><div class="rv" id="repCount">0</div></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Grafik Laporan</div>
-      <div class="chart-wrap" style="height:260px"><canvas id="reportChart"></canvas></div>
-    </div>
-  </div>
+    <!-- =============================================================
+         HALAMAN 2: PENDAPATAN (INCOME)
+         ============================================================= -->
+    <div id="tab-pendapatan" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 class="section-title">Pendapatan & Arus Masuk</h2>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Kelola semua sumber penghasilan, gaji, uang jajan, dan hasil usaha.</p>
+        </div>
+        <button id="btnIncomeTab" class="btn-income" style="padding:9px 18px;font-size:13px">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
+          Tambah Pendapatan
+        </button>
+      </div>
 
-</div><!-- /app -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            <span>Grafik Tren Pendapatan</span>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="incomeLineChart"></canvas></div>
+      </div>
 
-<!-- ===================== MODAL ===================== -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            <span>Riwayat Pendapatan Bulan Ini</span>
+          </div>
+        </div>
+        <div id="incomeList"></div>
+      </div>
+    </div><!-- /tab-pendapatan -->
+
+
+    <!-- =============================================================
+         HALAMAN 3: PENGELUARAN (EXPENSES)
+         ============================================================= -->
+    <div id="tab-pengeluaran" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 class="section-title">Pengeluaran & Belanja</h2>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Pantau pengeluaran kebutuhan pokok dan kendalikan gaya hidup.</p>
+        </div>
+        <button id="btnExpenseTab" class="btn-expense" style="padding:9px 18px;font-size:13px">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
+          Tambah Pengeluaran
+        </button>
+      </div>
+
+      <!-- Target Uang Jajan Realtime Bar -->
+      <div class="allowance-bar">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
+          <label for="allowanceInput" style="display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            <span>Target Anggaran Uang Jajan (Bulanan)</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" style="max-width:180px" />
+            <span style="font-size:11px;color:var(--muted)">(panduan batas jajan)</span>
+          </div>
+        </div>
+        <div id="allowanceProgressWrap" style="width:100%;margin-top:6px;display:none">
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px">
+            <span id="allowanceUsageText" style="color:var(--teal);font-weight:700">Terpakai: Rp0 / Rp0 (0%)</span>
+            <span id="allowanceRemainingText" style="color:var(--green);font-weight:700">Sisa: Rp0</span>
+          </div>
+          <div style="width:100%;height:8px;background:rgba(38,70,83,0.12);border-radius:4px;overflow:hidden">
+            <div id="allowanceProgressBar" style="height:100%;width:0%;background:var(--green);border-radius:4px;transition:width 0.3s ease, background 0.3s ease"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Grafik Pengeluaran per Hari</span>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="expenseLineChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            <span>Riwayat Pengeluaran Bulan Ini</span>
+          </div>
+        </div>
+        <div id="expenseList"></div>
+      </div>
+    </div><!-- /tab-pengeluaran -->
+
+
+    <!-- =============================================================
+         HALAMAN 4: TABUNGAN & DANA MASA DEPAN (NEW DEDICATED PAGE)
+         ============================================================= -->
+    <div id="tab-tabungan" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 class="section-title">Manajemen Tabungan & Masa Depan</h2>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Bangun aset kekayaan, amankan dana darurat, dan raih impian finansialmu.</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="btnSavingsTab" class="btn-savings" style="padding:9px 16px;font-size:13px">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
+            + Setor Tabungan
+          </button>
+          <button id="btnEmergencyTab" class="btn-expense" style="padding:9px 16px;font-size:13px;background:var(--teal)">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            + Dana Darurat
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNER EDUKASI ILMIAH: ALASAN TABUNGAN MASUK PENGELUARAN -->
+      <div class="savings-banner">
+        <div class="savings-banner-title">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Kenapa Tabungan Dianggarkan Sebagai "Arus Pengeluaran" (Cash Outflow)?</span>
+        </div>
+        <p class="savings-banner-lead">
+          Dalam perencanaan keuangan profesional (kaidah <strong>50/30/20</strong> dan standar <strong>CFP Board</strong>), tabungan dicatat sebagai <em>arus kas keluar</em> dari dompet operasional harian menuju rekening terkunci atau instrumen aset.
+        </p>
+        
+        <div class="savings-reasons-grid">
+          <div class="reason-card">
+            <h4>
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              1. "Pay Yourself First"
+            </h4>
+            <p>Menabung dari "sisa uang di akhir bulan" hampir selalu gagal. Dengan mengeluarkannya di awal dari dompet belanja, Anda mengamankan masa depan sebelum jatah gaya hidup terpakai.</p>
+          </div>
+          <div class="reason-card">
+            <h4>
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              2. Pemindahan Aset
+            </h4>
+            <p>Tabungan <strong>bukan beban hangus</strong>, melainkan pemindahan kas cair ke aset permanen. Uang ini tidak hilang dan langsung menambah <strong>Saldo Bersih (Net Worth)</strong> Anda.</p>
+          </div>
+          <div class="reason-card">
+            <h4>
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              3. Mencegah Godaan Impulsif
+            </h4>
+            <p>Jika saldo kas tetap terlihat menumpuk di rekening belanja harian, otak kita terbiasa merasa "masih banyak uang" sehingga memicu pengeluaran konsumtif yang tidak perlu.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Kartu Metrik Tabungan -->
+      <div class="summary-grid">
+        <div class="summary-card gold">
+          <div class="label">Tabungan Bulan Ini</div>
+          <div id="savPageTotalTabungan" class="value">Rp0</div>
+        </div>
+        <div class="summary-card dark">
+          <div class="label">Simpanan Dana Darurat</div>
+          <div id="savPageTotalDarurat" class="value">Rp0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Total Aset Bersih</div>
+          <div id="savPageTotalWealth" class="value" style="color:var(--teal)">Rp0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Rasio Tabungan Riil</div>
+          <div id="savPageRatio" class="value" style="color:var(--green)">0%</div>
+        </div>
+      </div>
+
+      <!-- Target Tabungan Bulanan (Savings Goal Tracker) -->
+      <div class="savings-goal-bar">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
+          <label for="savingsGoalInput" style="display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Target Tabungan Bulanan (Savings Goal)</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" inputmode="numeric" id="savingsGoalInput" placeholder="0" style="max-width:180px" />
+            <span style="font-size:11px;color:var(--muted)">(target alokasi bulanan)</span>
+          </div>
+        </div>
+        <div id="savingsProgressWrap" style="width:100%;margin-top:6px;display:none">
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px">
+            <span id="savingsUsageText" style="color:var(--teal);font-weight:700">Terkumpul: Rp0 / Rp0 (0%)</span>
+            <span id="savingsRemainingText" style="color:var(--green);font-weight:700">Sisa Target: Rp0</span>
+          </div>
+          <div style="width:100%;height:8px;background:rgba(38,70,83,0.12);border-radius:4px;overflow:hidden">
+            <div id="savingsProgressBar" style="height:100%;width:0%;background:var(--gold);border-radius:4px;transition:width 0.3s ease, background 0.3s ease"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Pilar Pos Simpanan -->
+      <div class="savings-pillars-grid">
+        
+        <!-- Pilar 1: Tabungan Masa Depan -->
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-header">
+              <div class="pillar-icon future">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <div class="pillar-name">Tabungan Masa Depan</div>
+                <div style="font-size:10.5px;color:var(--muted)">Target Impian & Rencana Jangka Panjang</div>
+              </div>
+            </div>
+            <div class="pillar-amount" id="pillarFutureAmt">Rp0</div>
+            <div class="pillar-desc">Untuk pembelian besar seperti DP rumah, laptop, modal usaha, atau biaya pernikahan.</div>
+          </div>
+        </div>
+
+        <!-- Pilar 2: Dana Darurat -->
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-header">
+              <div class="pillar-icon emergency">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              </div>
+              <div>
+                <div class="pillar-name">Dana Darurat (Emergency)</div>
+                <div style="font-size:10.5px;color:var(--muted)">Jaring Pengaman Krisis (Target 6x Biaya)</div>
+              </div>
+            </div>
+            <div class="pillar-amount" id="pillarEmergencyAmt">Rp0</div>
+            <div class="pillar-desc">Cadangan likuid jika terjadi musibah mendadak, sakit, atau kehilangan sumber pendapatan.</div>
+          </div>
+        </div>
+
+        <!-- Pilar 3: Investasi & Portofolio -->
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-header">
+              <div class="pillar-icon invest">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              </div>
+              <div>
+                <div class="pillar-name">Investasi & Portofolio</div>
+                <div style="font-size:10.5px;color:var(--muted)">Pertumbuhan Nilai Aset Melawan Inflasi</div>
+              </div>
+            </div>
+            <div class="pillar-amount" id="pillarInvestAmt">Rp0</div>
+            <div class="pillar-desc">Alokasi ke Reksadana, Saham, Surat Berharga Negara (SBN), atau instrumen emas.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Grafik Komposisi Simpanan & Riwayat Transaksi Tabungan -->
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+              <span>Komposisi Pos Simpanan</span>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="savingsPieChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+              <span>Riwayat Alokasi Tabungan Bulan Ini</span>
+            </div>
+          </div>
+          <div id="savingsList"></div>
+        </div>
+      </div>
+
+    </div><!-- /tab-tabungan -->
+
+
+    <!-- =============================================================
+         HALAMAN 5: LAPORAN (REPORTS)
+         ============================================================= -->
+    <div id="tab-laporan" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 class="section-title">Laporan Keuangan & Statistik</h2>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px">Rekapitulasi lengkap performa kas dan evaluasi keuangan berkala.</p>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <label for="reportPeriod">Periode Filter</label>
+        <select id="reportPeriod">
+          <option value="minggu">Mingguan</option>
+          <option value="bulan" selected>Bulanan</option>
+          <option value="tahun">Tahunan</option>
+        </select>
+        <label for="reportDate">Tanggal Acuan</label>
+        <input type="date" id="reportDate" />
+      </div>
+
+      <div class="report-stats">
+        <div class="rstat"><div class="rl">Total Pendapatan</div><div class="rv" id="repTotalIn" style="color:var(--green)">Rp0</div></div>
+        <div class="rstat"><div class="rl">Total Pengeluaran</div><div class="rv" id="repTotalOut" style="color:var(--red)">Rp0</div></div>
+        <div class="rstat"><div class="rl">Selisih Kas</div><div class="rv" id="repDiff">Rp0</div></div>
+        <div class="rstat"><div class="rl">Rata-rata Pengeluaran</div><div class="rv" id="repAvg">Rp0</div></div>
+        <div class="rstat"><div class="rl">Total Transaksi</div><div class="rv" id="repCount">0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Grafik Laporan Arus Kas</span>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:260px"><canvas id="reportChart"></canvas></div>
+      </div>
+    </div><!-- /tab-laporan -->
+
+  </main>
+</div><!-- /app-layout -->
+
+<!-- =============================================================
+     MODAL TAMBAH TRANSAKSI
+     ============================================================= -->
 <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
     <div class="modal-header">
       <h3 id="modalTitle" class="modal-title">Tambah Transaksi</h3>
       <button id="modalClose" class="modal-close" aria-label="Tutup">✕</button>
     </div>
-    <div class="form-group">
-      <label class="form-label" for="modalDate">Tanggal</label>
-      <input type="date" id="modalDate" class="form-input" />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="modalDesc">Deskripsi</label>
-      <input type="text" id="modalDesc" class="form-input" placeholder="Contoh: Gaji Juli, Beli makan siang…" />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="modalAmount">Jumlah (Rp)</label>
-      <input type="text" inputmode="numeric" id="modalAmount" class="form-input mono" placeholder="0" />
-    </div>
-    <div class="form-group" id="categoryWrap">
-      <label class="form-label" for="modalCategory">Kategori</label>
-      <select id="modalCategory" class="form-input">
-        <option value="kebutuhan">Kebutuhan</option>
-      </select>
-    </div>
-    <button id="modalSubmit" class="modal-submit income">Simpan</button>
+    <form id="transactionForm" onsubmit="return false;">
+      <div class="form-group">
+        <label class="form-label" for="modalDate">Tanggal Transaksi</label>
+        <input type="date" id="modalDate" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modalDesc">Deskripsi / Keterangan</label>
+        <input type="text" id="modalDesc" class="form-input" placeholder="Contoh: Gaji Pokok, Beli makan siang, Tabungan DP…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modalAmount">Jumlah Nominal (Rp)</label>
+        <input type="text" inputmode="numeric" id="modalAmount" class="form-input mono" placeholder="0" />
+      </div>
+      <div class="form-group" id="categoryWrap">
+        <label class="form-label" for="modalCategory">Kategori & Pos Keuangan</label>
+        <select id="modalCategory" class="form-input">
+          <option value="kebutuhan">Kebutuhan Pokok</option>
+        </select>
+      </div>
+      <button type="submit" id="modalSubmit" class="modal-submit income">Simpan Transaksi (Enter)</button>
+    </form>
   </div>
 </div>
 
-<!-- ===================== MODAL INDIKATOR KESEHATAN ===================== -->
+<!-- =============================================================
+     MODAL DETAIL INDIKATOR KESEHATAN FINANSIAL
+     ============================================================= -->
 <div id="healthModalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="healthModalTitle">
   <div class="modal-box health-modal-box">
     <div class="modal-header">
@@ -297,7 +681,7 @@
       <div class="health-info-box">
         <div class="health-box-title">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          Ambang Batas (Threshold)
+          Ambang Batas (Thresholds)
         </div>
         <div class="health-thresholds" id="healthModalThresholds"></div>
       </div>
@@ -306,14 +690,90 @@
       <div class="health-info-box">
         <div class="health-box-title">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          Referensi Pakar & Lembaga
+          Referensi Pakar & Lembaga Finansial
         </div>
         <div class="health-ref-list" id="healthModalRef"></div>
       </div>
     </div>
 
     <button id="healthModalAction" class="modal-submit income">
-      <span>Ke Tab Pengeluaran</span> →
+      <span>Ke Halaman Terkait</span> →
+    </button>
+  </div>
+</div>
+
+<!-- =============================================================
+     MODAL PANDUAN SHORTCUT KEYBOARD
+     ============================================================= -->
+<div id="shortcutModalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="shortcutModalTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" style="color:var(--gold)">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+        </svg>
+        <h3 id="shortcutModalTitle" class="modal-title">Keyboard Shortcuts</h3>
+      </div>
+      <button id="shortcutModalClose" class="modal-close" aria-label="Tutup">✕</button>
+    </div>
+
+    <table class="shortcut-table">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:8px 6px;font-size:11px;text-transform:uppercase;color:var(--muted)">Aksi / Halaman</th>
+          <th style="text-align:right;padding:8px 6px;font-size:11px;text-transform:uppercase;color:var(--muted)">Tombol Keyboard</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Buka Halaman Beranda</strong></td>
+          <td><kbd class="kbd-hint">Alt + 1</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Buka Halaman Pendapatan</strong></td>
+          <td><kbd class="kbd-hint">Alt + 2</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Buka Halaman Pengeluaran</strong></td>
+          <td><kbd class="kbd-hint">Alt + 3</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Buka Halaman Tabungan</strong></td>
+          <td><kbd class="kbd-hint">Alt + 4</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Buka Halaman Laporan</strong></td>
+          <td><kbd class="kbd-hint">Alt + 5</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Tambah Pendapatan Cepat</strong></td>
+          <td><kbd class="kbd-hint">Alt + I</kbd> atau <kbd class="kbd-hint">+</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Tambah Pengeluaran Cepat</strong></td>
+          <td><kbd class="kbd-hint">Alt + E</kbd> atau <kbd class="kbd-hint">-</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Alokasi Tabungan Cepat</strong></td>
+          <td><kbd class="kbd-hint">Alt + S</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Buka Panduan Shortcuts</strong></td>
+          <td><kbd class="kbd-hint">Alt + K</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Simpan Form Transaksi</strong></td>
+          <td><kbd class="kbd-hint">Enter</kbd></td>
+        </tr>
+        <tr>
+          <td><strong>Tutup Dialog / Modal</strong></td>
+          <td><kbd class="kbd-hint">Escape</kbd></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button id="shortcutModalDone" class="modal-submit income" style="background:var(--teal)">
+      Saya Mengerti
     </button>
   </div>
 </div>
