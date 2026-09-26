@@ -269,25 +269,27 @@
       <h3 id="modalTitle" class="modal-title">Tambah Transaksi</h3>
       <button id="modalClose" class="modal-close" aria-label="Tutup">✕</button>
     </div>
-    <div class="form-group">
-      <label class="form-label" for="modalDate">Tanggal</label>
-      <input type="date" id="modalDate" class="form-input" />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="modalDesc">Deskripsi</label>
-      <input type="text" id="modalDesc" class="form-input" placeholder="Contoh: Gaji Juli, Beli makan siang…" />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="modalAmount">Jumlah (Rp)</label>
-      <input type="text" inputmode="numeric" id="modalAmount" class="form-input mono" placeholder="0" />
-    </div>
-    <div class="form-group" id="categoryWrap">
-      <label class="form-label" for="modalCategory">Kategori</label>
-      <select id="modalCategory" class="form-input">
-        <option value="kebutuhan">Kebutuhan</option>
-      </select>
-    </div>
-    <button id="modalSubmit" class="modal-submit income">Simpan</button>
+    <form id="transactionForm" onsubmit="return false;">
+      <div class="form-group">
+        <label class="form-label" for="modalDate">Tanggal</label>
+        <input type="date" id="modalDate" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modalDesc">Deskripsi</label>
+        <input type="text" id="modalDesc" class="form-input" placeholder="Contoh: Gaji Juli, Beli makan siang…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modalAmount">Jumlah (Rp)</label>
+        <input type="text" inputmode="numeric" id="modalAmount" class="form-input mono" placeholder="0" />
+      </div>
+      <div class="form-group" id="categoryWrap">
+        <label class="form-label" for="modalCategory">Kategori</label>
+        <select id="modalCategory" class="form-input">
+          <option value="kebutuhan">Kebutuhan Pokok</option>
+        </select>
+      </div>
+      <button type="submit" id="modalSubmit" class="modal-submit income">Simpan</button>
+    </form>
   </div>
 </div>
 

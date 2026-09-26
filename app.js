@@ -161,6 +161,8 @@ const modalAmount   = document.getElementById('modalAmount');
 const modalClose    = document.getElementById('modalClose');
 const modalCategory = document.getElementById('modalCategory');
 
+const transactionForm = document.getElementById('transactionForm');
+
 if (modalAmount) formatAmountInput(modalAmount);
 
 function openModal(mode, defaultCategory = null) {
@@ -216,6 +218,11 @@ function openModal(mode, defaultCategory = null) {
     }
   }
   modalOverlay.classList.add('open');
+
+  // Auto focus ke nominal agar user bisa langsung ketik dan tekan Enter
+  setTimeout(() => {
+    if (modalAmount) modalAmount.focus();
+  }, 100);
 }
 
 function closeModal() {
@@ -229,45 +236,76 @@ if (modalOverlay) {
   });
 }
 
-if (modalSubmit) {
-  modalSubmit.addEventListener('click', () => {
-    try {
-      const date = modalDate ? modalDate.value : null;
-      const desc = modalDesc ? modalDesc.value.trim() : '';
-      const finalDesc = desc || (modalMode === 'in' ? 'Pendapatan' : 'Pengeluaran');
-      const amount = modalAmount ? parseRibuan(modalAmount.value) : 0;
-      const cat = modalCategory ? modalCategory.value : 'lainnya';
+function submitTransaction() {
+  try {
+    const date = modalDate ? modalDate.value : null;
+    const desc = modalDesc ? modalDesc.value.trim() : '';
+    const finalDesc = desc || (modalMode === 'in' ? 'Pendapatan' : 'Pengeluaran');
+    const amount = modalAmount ? parseRibuan(modalAmount.value) : 0;
+    const cat = modalCategory ? modalCategory.value : 'lainnya';
 
-      if (!date || !amount) {
-        if (modalAmount) modalAmount.focus();
-        return;
-      }
-
-      transactions.push({
-        id: uid(),
-        date,
-        description: finalDesc,
-        amount,
-        type: modalMode,
-        category: cat
-      });
-
-      saveData();
-
-      // Sinkronkan currentMonth ke bulan transaksi yang baru ditambahkan agar langsung terlihat
-      const txMonth = date.slice(0, 7);
-      if (txMonth !== currentMonth) {
-        currentMonth = txMonth;
-      }
-
-      closeModal();
-      renderAll();
-    } catch (err) {
-      console.error("Error saving transaction:", err);
-      alert("Terjadi kesalahan saat menyimpan transaksi.");
+    if (!date || !amount) {
+      if (modalAmount && !amount) modalAmount.focus();
+      else if (modalDate && !date) modalDate.focus();
+      return;
     }
+
+    transactions.push({
+      id: uid(),
+      date,
+      description: finalDesc,
+      amount,
+      type: modalMode,
+      category: cat
+    });
+
+    saveData();
+
+    // Sinkronkan currentMonth ke bulan transaksi yang baru ditambahkan agar langsung terlihat
+    const txMonth = date.slice(0, 7);
+    if (txMonth !== currentMonth) {
+      currentMonth = txMonth;
+    }
+
+    closeModal();
+    renderAll();
+  } catch (err) {
+    console.error("Error saving transaction:", err);
+    alert("Terjadi kesalahan saat menyimpan transaksi.");
+  }
+}
+
+if (modalSubmit) {
+  modalSubmit.addEventListener('click', (e) => {
+    e.preventDefault();
+    submitTransaction();
   });
 }
+
+if (transactionForm) {
+  transactionForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitTransaction();
+  });
+}
+
+// Dukungan tombol Enter pada semua input modal
+[modalDate, modalDesc, modalAmount, modalCategory].forEach(el => {
+  el?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitTransaction();
+    }
+  });
+});
+
+// Dukungan tombol Escape untuk menutup modal
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (modalOverlay?.classList.contains('open')) closeModal();
+    if (document.getElementById('healthModalOverlay')?.classList.contains('open')) closeHealthModal();
+  }
+});
 
 // Tombol Quick Actions
 document.getElementById('btnIncome')?.addEventListener('click', () => openModal('in'));
