@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>gwcatat — Dashboard</title>
   <meta name="description" content="Catat pendapatan dan pengeluaran harian kamu dengan mudah." />
+  <script>
+    try {
+      const appSession = JSON.parse(localStorage.getItem('gwcatat_session') || 'null');
+      if (!appSession || !appSession.email) window.location.replace('login.html');
+    } catch (error) {
+      localStorage.removeItem('gwcatat_session');
+      window.location.replace('login.html');
+    }
+  </script>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
