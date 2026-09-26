@@ -41,11 +41,14 @@
         <button id="prevMonth" aria-label="Bulan sebelumnya">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <span id="monthLabel">Jan 2025</span>
+        <span id="monthLabel">Bulan Ini</span>
         <button id="nextMonth" aria-label="Bulan berikutnya">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
+      <button id="exportBtn" class="btn-logout" title="Cadangkan Data Transaksi">Ekspor</button>
+      <button id="importBtn" class="btn-logout" title="Pulihkan Data Transaksi">Impor</button>
+      <input type="file" id="importFileInput" accept=".json" style="display:none" />
       <button id="logoutBtn" class="btn-logout">Keluar</button>
     </div>
   </header>
@@ -204,12 +207,25 @@
       </button>
     </div>
     <div class="allowance-bar">
-      <label for="allowanceInput">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-        Target Uang Jajan
-      </label>
-      <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" />
-      <span style="font-size:11px;color:var(--muted)">(sebagai panduan)</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
+        <label for="allowanceInput" style="display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          Target Uang Jajan
+        </label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="text" inputmode="numeric" id="allowanceInput" placeholder="0" style="max-width:160px" />
+          <span style="font-size:11px;color:var(--muted)">(panduan)</span>
+        </div>
+      </div>
+      <div id="allowanceProgressWrap" style="width:100%;margin-top:6px;display:none">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+          <span id="allowanceUsageText" style="color:var(--teal);font-weight:700">Terpakai: Rp0 / Rp0 (0%)</span>
+          <span id="allowanceRemainingText" style="color:var(--green);font-weight:700">Sisa: Rp0</span>
+        </div>
+        <div style="width:100%;height:7px;background:rgba(38,70,83,0.12);border-radius:4px;overflow:hidden">
+          <div id="allowanceProgressBar" style="height:100%;width:0%;background:var(--green);border-radius:4px;transition:width 0.3s ease, background 0.3s ease"></div>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">Grafik Pengeluaran</div>
