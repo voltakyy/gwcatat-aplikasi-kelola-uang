@@ -1,6 +1,6 @@
 # StudyMate
 
-StudyMate helps students plan sessions, use a focus timer, complete quick knowledge checks, and track study time, streaks, and achievements.
+StudyMate helps students plan sessions, use a focus timer, complete quick knowledge checks, and track study time, streaks, and achievements. The app opens directly without a sign-in page.
 
 ## Features
 
@@ -10,12 +10,12 @@ StudyMate helps students plan sessions, use a focus timer, complete quick knowle
 - Each task can award study points only once each day. There are no reward-claim buttons or repeatable point actions.
 - Study timers keep running when navigating between pages, and finished sessions are added to the study history.
 - The responsive layout includes a compact mobile navigation bar and avoids horizontal overflow on phone-sized screens.
-- Study progress is stored per signed-in account in this browser's `localStorage`.
-- Personal planner entries are saved per signed-in account and date in this browser's `localStorage`.
+- Users can create and choose local profiles without signing in. Study progress, planner entries, finance transactions, and gamification data are stored per profile in this browser's `localStorage`.
+- Existing signed-in browser data is migrated to a local profile on first use; no email is required for new profiles.
 - GitHub Pages deploys the static app from the repository root whenever changes reach `main`.
 
-The app is static and has no server-side progress validation or cross-device sync. Data saved in local storage can be edited by the device owner; the daily reward limit prevents accidental or in-app repeat claims, not deliberate storage tampering.
+The app is static and has no authentication, server-side progress validation, or cross-device sync. GitHub Pages serves a public website; local profiles only separate data on the same browser and are not security boundaries. Anyone with access to that browser can open its profiles or inspect/edit local storage. Do not store sensitive or financial data you need to keep confidential.
 
 ## Run locally
 
-Serve this folder with a static web server and open `login.html`. `index.html`, `study.css`, and `study.js` power StudyMate. `finance.html` retains the original gwcatat finance tracker.
+Serve this folder with a static web server and open `index.html`. `index.html`, `study.css`, and `study.js` power StudyMate. `finance.html` retains the original gwcatat finance tracker and uses the selected local profile.

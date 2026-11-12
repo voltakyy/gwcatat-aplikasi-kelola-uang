@@ -2,21 +2,15 @@
 // GWCATAT — app.js (Arsitektur 5 Halaman & Shortcut Lengkap)
 // =============================================================
 
-// ===== CEK SESSION =====
-const session = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
-if (!session) {
-  window.location.href = 'login.html';
-}
+// Data keuangan dipisahkan berdasarkan profil lokal StudyMate di browser ini.
+const activeProfileId = sessionStorage.getItem('studymate_active_profile');
+if (!activeProfileId) window.location.replace('index.html');
+const userStorageKey = `gwcatat_${activeProfileId || 'unselected'}_transactions`;
 
-// User-specific storage key agar data terisolasi per akun
-const userStorageKey = session && session.email
-  ? `gwcatat_${session.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`
-  : 'gwcatat_transactions';
-
-// ===== LOGOUT =====
+// ===== GANTI PROFIL =====
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
-  sessionStorage.removeItem('gwcatat_session')
-  window.location.href = 'login.html'
+  sessionStorage.removeItem('studymate_active_profile');
+  window.location.href = 'index.html';
 })
 
 // ===== STATE =====
@@ -36,14 +30,6 @@ function loadTransactions() {
   const userTx = localStorage.getItem(userStorageKey);
   if (userTx) {
     try { return JSON.parse(userTx) || []; } catch (e) {}
-  }
-  const globalTx = localStorage.getItem('gwcatat_transactions');
-  if (globalTx) {
-    try {
-      const parsed = JSON.parse(globalTx) || [];
-      localStorage.setItem(userStorageKey, JSON.stringify(parsed));
-      return parsed;
-    } catch (e) {}
   }
   return [];
 }
