@@ -1153,3 +1153,253 @@ body {
     padding: 16px 14px 70px;
   }
 }
+
+/* iOS-inspired, responsive adventure experience */
+:root {
+  --teal: #202b45;
+  --teal-lt: #526282;
+  --teal-subtle: rgba(104, 87, 220, 0.08);
+  --gold: #7958dc;
+  --gold-lt: rgba(121, 88, 220, 0.10);
+  --green: #168a70;
+  --green-lt: rgba(22, 138, 112, 0.10);
+  --red: #d65e72;
+  --red-lt: rgba(214, 94, 114, 0.10);
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --border: rgba(38, 51, 79, 0.09);
+  --text: #192338;
+  --muted: rgba(25, 35, 56, 0.52);
+  --radius: 20px;
+  --shadow: 0 2px 8px rgba(32, 43, 69, 0.035), 0 12px 30px rgba(32, 43, 69, 0.035);
+  --shadow-lg: 0 18px 48px rgba(32, 43, 69, 0.12);
+}
+
+html { min-width: 0; overflow-x: clip; }
+body {
+  min-width: 0;
+  overflow-x: clip;
+  background:
+    radial-gradient(ellipse at 86% 0%, rgba(147, 130, 244, 0.08), transparent 34rem),
+    var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+}
+.app-layout { min-width: 0; width: 100%; overflow-x: clip; }
+.app-sidebar { flex: 0 0 var(--sidebar-w); background: rgba(255,255,255,.92); }
+.app-main { width: 100%; min-width: 0; }
+.card, .summary-card, .rstat { border-color: var(--border); box-shadow: var(--shadow); }
+.card { border-radius: 22px; padding: 22px; }
+.app-topbar { border-radius: 18px; border-color: var(--border); backdrop-filter: blur(18px); }
+.page-badge-title, .section-title { color: var(--text); }
+.nav-item.active { background: linear-gradient(135deg, #313d5d, #202b45); }
+.summary-card { border-radius: 18px; }
+.summary-card .value { font-size: clamp(16px, 2vw, 24px); overflow-wrap: anywhere; }
+.quick-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.quick-actions > * { min-width: 0; }
+.tx-item, .allowance-bar, .savings-goal-bar { border-radius: 16px; }
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(121, 88, 220, .28);
+  outline-offset: 2px;
+}
+
+.home-game-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 185px;
+  gap: 20px;
+  overflow: hidden;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid rgba(130, 115, 224, .13);
+  border-radius: 26px;
+  background: linear-gradient(120deg, #fff 5%, #faf9ff 66%, #f0edff);
+  box-shadow: var(--shadow);
+}
+.home-game-copy, .home-game-side { position: relative; z-index: 1; min-width: 0; }
+.game-eyebrow { color: var(--gold); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.home-game-card h2, .adventure-hero h2 {
+  margin: 7px 0 5px;
+  color: var(--text);
+  font-size: clamp(23px, 4vw, 34px);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.1;
+}
+.home-game-card h2 span, .adventure-hero h2 span { color: var(--gold); }
+.home-game-card p, .adventure-hero-content > p { max-width: 560px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.home-game-progress { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; max-width: 440px; margin-top: 21px; }
+.home-game-progress > span:first-child { font-size: 12px; font-weight: 750; color: var(--text); }
+.home-game-progress > span:nth-child(2) { color: var(--gold); font-size: 12px; font-weight: 800; }
+.game-progress-track { height: 8px; overflow: hidden; border-radius: 99px; background: rgba(121, 88, 220, .12); }
+.game-progress-track > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a58af4, #7655df); transition: width .4s ease; }
+.home-game-progress .game-progress-track { grid-column: 1 / -1; }
+.home-game-progress small { grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
+.home-game-side { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; }
+.game-orbit { position: absolute; top: -36px; right: 2px; color: rgba(121, 88, 220, .15); font-size: 115px; line-height: 1; }
+.home-game-streak { display: flex; align-items: center; gap: 6px; color: var(--text); font-size: 17px; }
+.home-game-streak strong { font-size: 23px; }
+.home-game-streak small { max-width: 48px; color: var(--muted); font-size: 10px; line-height: 1.2; }
+.game-link-button { position: relative; border: 0; border-radius: 99px; padding: 9px 14px; background: var(--teal); color: white; font-size: 11px; font-weight: 750; cursor: pointer; }
+.game-link-button span { margin-left: 5px; }
+
+.adventure-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(150px, .65fr);
+  min-height: 246px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 26px;
+  padding: clamp(22px, 4vw, 34px);
+  color: white;
+  background:
+    radial-gradient(circle at 85% 22%, rgba(173, 151, 255, .37), transparent 13rem),
+    linear-gradient(120deg, #202b45, #313761 70%, #584988);
+  box-shadow: 0 20px 44px rgba(38, 38, 79, .16);
+}
+.adventure-hero .game-eyebrow { color: #c9bcff; }
+.adventure-hero h2 { color: white; }
+.adventure-hero-content > p { color: rgba(255,255,255,.7); }
+.adventure-level-row { display: flex; align-items: center; gap: 12px; max-width: 400px; margin-top: 21px; }
+.adventure-level-icon { display: grid; flex: 0 0 48px; width: 48px; height: 48px; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 15px; background: rgba(255,255,255,.12); font-weight: 800; }
+.adventure-level-copy { display: grid; flex: 1; min-width: 0; gap: 5px; }
+.adventure-level-copy strong { font-size: 13px; }
+.adventure-level-copy > span { color: rgba(255,255,255,.7); font-size: 10px; }
+.adventure-hero .game-progress-track { background: rgba(255,255,255,.18); }
+.adventure-hero .game-progress-track > span { background: linear-gradient(90deg, #c0aeff, #f3c7ff); }
+.adventure-hero-art { position: relative; display: grid; min-width: 0; place-items: center; }
+.adventure-orb { position: absolute; top: 6%; right: 18%; display: grid; width: 76px; height: 76px; place-items: center; border: 1px solid rgba(255,255,255,.27); border-radius: 50%; color: #e7d8ff; background: rgba(255,255,255,.12); box-shadow: 0 0 55px rgba(188,163,255,.35); font-size: 38px; }
+.adventure-mountain { position: absolute; bottom: 14px; color: rgba(255,255,255,.14); font-size: 122px; line-height: .8; transform: scaleX(1.7); }
+.adventure-art-caption { position: absolute; bottom: 4px; right: 4px; color: rgba(255,255,255,.65); font-size: 8px; font-weight: 800; letter-spacing: .12em; line-height: 1.6; text-align: right; }
+.game-stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.game-stat-card { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: center; gap: 2px 10px; min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+.game-stat-icon { grid-row: span 2; display: grid; width: 36px; height: 36px; place-items: center; border-radius: 12px; color: var(--gold); background: var(--gold-lt); font-size: 17px; }
+.game-stat-label { min-width: 0; color: var(--muted); font-size: 10px; font-weight: 650; }
+.game-stat-card strong { min-width: 0; overflow-wrap: anywhere; color: var(--text); font-size: 16px; }
+.game-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.game-section-heading h2 { margin-top: 4px; color: var(--text); font-size: 18px; letter-spacing: -.03em; }
+.game-date-pill { max-width: 50%; border-radius: 99px; padding: 7px 10px; background: var(--bg); color: var(--muted); font-size: 10px; font-weight: 700; text-align: center; }
+.game-section-note { color: var(--muted); font-size: 10px; text-align: right; }
+.game-quest-list { display: grid; gap: 9px; }
+.game-quest { display: grid; grid-template-columns: 42px minmax(0, 1fr) 54px auto; align-items: center; gap: 12px; min-width: 0; padding: 13px; border: 1px solid var(--border); border-radius: 16px; background: #fcfcfe; }
+.game-quest.is-complete { border-color: rgba(22,138,112,.2); background: #f5fbf9; }
+.game-quest-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; color: var(--gold); background: var(--gold-lt); font-size: 19px; font-weight: 800; }
+.game-quest.is-complete .game-quest-icon { color: var(--green); background: var(--green-lt); }
+.game-quest-copy { min-width: 0; }
+.game-quest-copy h3 { overflow-wrap: anywhere; color: var(--text); font-size: 12px; }
+.game-quest-copy p { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.game-quest-status { display: inline-block; margin-top: 5px; color: var(--gold); font-size: 9px; font-weight: 750; }
+.game-quest.is-complete .game-quest-status { color: var(--green); }
+.game-quest-reward { display: grid; justify-items: center; color: var(--gold); }
+.game-quest-reward strong { font-size: 13px; }
+.game-quest-reward small { font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+.game-quest-action { min-width: 70px; border: 1px solid rgba(121,88,220,.18); border-radius: 99px; padding: 8px 11px; background: white; color: var(--gold); font-size: 10px; font-weight: 800; cursor: pointer; }
+.game-quest-action:hover:not(:disabled) { background: var(--gold); color: white; }
+.game-quest-action:disabled { border-color: transparent; background: var(--green-lt); color: var(--green); cursor: default; }
+.game-footnote { margin: 13px 2px 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.game-level-map { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.game-map-step { display: grid; justify-items: center; align-content: start; gap: 6px; min-width: 0; padding: 12px 5px; border: 1px solid var(--border); border-radius: 15px; text-align: center; opacity: .58; }
+.game-map-step.is-reached { opacity: 1; background: #faf9ff; }
+.game-map-step.is-current { border-color: rgba(121,88,220,.45); box-shadow: inset 0 0 0 1px rgba(121,88,220,.12); }
+.game-map-node { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: #eceef5; color: var(--muted); font-size: 10px; font-weight: 800; }
+.game-map-step.is-reached .game-map-node { background: var(--gold-lt); color: var(--gold); }
+.game-map-step strong { overflow-wrap: anywhere; color: var(--text); font-size: 9px; }
+.game-map-step small { color: var(--muted); font-size: 8px; }
+.game-achievements { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.game-achievement { display: grid; justify-items: center; gap: 5px; min-width: 0; padding: 15px 8px; border: 1px solid var(--border); border-radius: 16px; background: #fafbfe; text-align: center; opacity: .55; }
+.game-achievement > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 13px; background: #eceef5; font-size: 18px; }
+.game-achievement strong { overflow-wrap: anywhere; color: var(--text); font-size: 10px; }
+.game-achievement small { color: var(--muted); font-size: 8px; line-height: 1.4; }
+.game-achievement.is-unlocked { border-color: rgba(121,88,220,.2); background: #faf9ff; opacity: 1; }
+.game-achievement.is-unlocked > span { background: var(--gold-lt); }
+.game-integrity-note { display: flex; align-items: start; gap: 10px; padding: 15px 16px; border: 1px solid rgba(22,138,112,.14); border-radius: 16px; background: #f5fbf9; }
+.game-integrity-note > span { font-size: 17px; }
+.game-integrity-note p { color: var(--muted); font-size: 10px; line-height: 1.55; }
+.game-integrity-note strong { color: var(--text); }
+.game-notice { position: fixed; z-index: 200; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom)); max-width: calc(100vw - 28px); padding: 12px 17px; border: 1px solid rgba(255,255,255,.12); border-radius: 99px; background: #202b45; color: white; box-shadow: var(--shadow-lg); font-size: 12px; font-weight: 750; text-align: center; opacity: 0; pointer-events: none; transform: translate(-50%, 12px); transition: opacity .2s, transform .2s; }
+.game-notice.visible { opacity: 1; transform: translate(-50%, 0); }
+.mobile-tab-bar { display: none; }
+
+@media (max-width: 840px) {
+  .app-main { padding: 16px 14px calc(98px + env(safe-area-inset-bottom)); }
+  .mobile-tab-bar {
+    position: fixed;
+    z-index: 40;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3px;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(38,51,79,.09);
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 -8px 26px rgba(32,43,69,.06);
+    backdrop-filter: blur(24px);
+  }
+  .mobile-tab-item { display: grid; justify-items: center; gap: 2px; min-width: 0; border: 0; border-radius: 13px; padding: 5px 2px 2px; background: transparent; color: var(--muted); cursor: pointer; }
+  .mobile-tab-item > span { display: grid; min-width: 25px; height: 24px; place-items: center; font-size: 20px; font-weight: 750; line-height: 1; }
+  .mobile-tab-item small { max-width: 100%; overflow: hidden; font-size: 9px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-tab-item.active { color: var(--gold); }
+  .mobile-tab-add > span { width: 34px; height: 34px; margin-top: -13px; border: 3px solid white; border-radius: 50%; background: var(--gold); color: white; box-shadow: 0 4px 12px rgba(121,88,220,.32); font-size: 24px; }
+  .mobile-tab-add small { color: var(--text); }
+}
+
+@media (max-width: 560px) {
+  .app-main { padding-right: 12px; padding-left: 12px; }
+  .app-topbar { padding: 10px 12px; }
+  .page-badge-title { font-size: 15px; }
+  .month-nav { gap: 0; }
+  .month-nav span { min-width: 96px; font-size: 11px; }
+  .summary-grid { gap: 8px; }
+  .summary-card { min-width: 0; padding: 13px 12px; }
+  .summary-card .label { font-size: 9px; }
+  .summary-card .value { font-size: clamp(15px, 4vw, 20px); }
+  .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .quick-actions button { padding: 10px 8px; font-size: 11px; }
+  .card { padding: 15px; }
+  .home-game-card { grid-template-columns: minmax(0, 1fr) 72px; gap: 8px; padding: 19px 16px; }
+  .home-game-card p { font-size: 11px; }
+  .home-game-side { gap: 8px; }
+  .game-orbit { top: -28px; right: -15px; font-size: 78px; }
+  .home-game-streak { gap: 3px; font-size: 14px; }
+  .home-game-streak strong { font-size: 19px; }
+  .home-game-streak small { font-size: 8px; }
+  .game-link-button { padding: 8px 9px; font-size: 9px; }
+  .adventure-hero { grid-template-columns: minmax(0, 1fr) 72px; min-height: 0; padding: 21px 16px; }
+  .adventure-hero h2 { font-size: 24px; }
+  .adventure-hero-content > p { font-size: 11px; }
+  .adventure-level-row { gap: 8px; }
+  .adventure-level-icon { flex-basis: 40px; width: 40px; height: 40px; }
+  .adventure-level-copy > span { font-size: 9px; }
+  .adventure-orb { top: 8%; right: 4%; width: 52px; height: 52px; font-size: 27px; }
+  .adventure-mountain { bottom: 15px; font-size: 82px; }
+  .adventure-art-caption { font-size: 6px; }
+  .game-stats-grid { gap: 7px; }
+  .game-stat-card { grid-template-columns: 28px minmax(0,1fr); gap: 2px 6px; padding: 10px 8px; border-radius: 14px; }
+  .game-stat-icon { width: 28px; height: 28px; border-radius: 9px; font-size: 14px; }
+  .game-stat-label { font-size: 8px; line-height: 1.3; }
+  .game-stat-card strong { font-size: 12px; }
+  .game-quest-section { padding: 13px; }
+  .game-quest { grid-template-columns: 36px minmax(0,1fr) auto; gap: 8px; padding: 10px; }
+  .game-quest-icon { width: 36px; height: 36px; }
+  .game-quest-reward { grid-column: 2; grid-row: 2; justify-self: start; display: flex; gap: 3px; align-items: baseline; }
+  .game-quest-action { grid-column: 3; grid-row: 1 / span 2; min-width: 58px; padding: 8px 7px; font-size: 9px; }
+  .game-quest-copy p { font-size: 9px; }
+  .game-level-map { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .game-achievements { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .calendar-grid { gap: 2px; }
+  .cal-day { min-width: 0; padding-right: 0; padding-left: 0; }
+  .cal-day .dsums { font-size: 7px; }
+}
+
+@media (max-width: 360px) {
+  .home-game-card { grid-template-columns: minmax(0, 1fr) 60px; padding-right: 12px; padding-left: 12px; }
+  .home-game-card h2 { font-size: 21px; }
+  .home-game-streak { font-size: 12px; }
+  .home-game-streak strong { font-size: 17px; }
+  .game-link-button { padding: 7px; font-size: 8px; }
+  .adventure-hero { grid-template-columns: minmax(0, 1fr) 56px; padding: 18px 13px; }
+  .app-main { padding-right: 10px; padding-left: 10px; }
+}

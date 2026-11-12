@@ -261,6 +261,7 @@ function submitTransaction() {
     transactions.push({
       id: uid(),
       date,
+      createdAt: new Date().toISOString(),
       description: finalDesc,
       amount,
       type: modalMode,
@@ -268,6 +269,9 @@ function submitTransaction() {
     });
 
     saveData();
+    window.dispatchEvent(new CustomEvent('gwcatat:transaction-saved', {
+      detail: transactions[transactions.length - 1]
+    }));
 
     // Sinkronkan currentMonth ke bulan transaksi
     const txMonth = date.slice(0, 7);
@@ -322,6 +326,7 @@ function renderAll() {
   renderHealthIndicators(monthTx);
   renderAllowance(monthTx);
   updateReport(monthTx);
+  window.gwcatatRenderGamification?.();
 }
 
 // ===== 1. SUMMARY CARDS (BERANDA) =====
@@ -1084,19 +1089,23 @@ function updateReport(tx) {
   }
 }
 
-// ===== 9. NAVIGASI 5 HALAMAN =====
+// ===== 9. NAVIGASI HALAMAN =====
 const PAGE_TITLES = {
   beranda:     'Beranda',
   pendapatan:  'Pendapatan & Arus Masuk',
   pengeluaran: 'Pengeluaran & Belanja',
   tabungan:    'Manajemen Tabungan & Masa Depan',
-  laporan:     'Laporan Keuangan & Statistik'
+  laporan:     'Laporan Keuangan & Statistik',
+  petualangan: 'Petualangan Finansial'
 };
 
 function switchTab(tabName) {
   if (!tabName) return;
   
   document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.mobile-tab-item[data-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabName);
   });
 
@@ -1212,13 +1221,14 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Alt + Number (1-5) untuk pindah halaman
+  // Alt + Number untuk pindah halaman
   if (e.altKey) {
     if (e.key === '1') { e.preventDefault(); switchTab('beranda'); return; }
     if (e.key === '2') { e.preventDefault(); switchTab('pendapatan'); return; }
     if (e.key === '3') { e.preventDefault(); switchTab('pengeluaran'); return; }
     if (e.key === '4') { e.preventDefault(); switchTab('tabungan'); return; }
     if (e.key === '5') { e.preventDefault(); switchTab('laporan'); return; }
+    if (e.key === '6') { e.preventDefault(); switchTab('petualangan'); return; }
     if (e.key.toLowerCase() === 'i') { e.preventDefault(); openModal('in'); return; }
     if (e.key.toLowerCase() === 'e') { e.preventDefault(); openModal('out'); return; }
     if (e.key.toLowerCase() === 's') { e.preventDefault(); openModal('out', 'tabungan'); return; }
@@ -1250,6 +1260,21 @@ document.getElementById('btnIncomeTab')?.addEventListener('click', () => openMod
 document.getElementById('btnExpenseTab')?.addEventListener('click', () => openModal('out'));
 document.getElementById('btnSavingsTab')?.addEventListener('click', () => openModal('out', 'tabungan'));
 document.getElementById('btnEmergencyTab')?.addEventListener('click', () => openModal('out', 'darurat'));
+document.getElementById('mobileQuickAdd')?.addEventListener('click', () => openModal('out'));
+document.querySelectorAll('.mobile-tab-item[data-tab]').forEach((button) => {
+  button.addEventListener('click', () => switchTab(button.dataset.tab));
+});
+
+window.addEventListener('gwcatat:open-transaction', (event) => {
+  const action = event.detail?.action;
+  if (action === 'income') openModal('in');
+  else if (action === 'saving') openModal('out', 'tabungan');
+  else if (action === 'expense') openModal('out');
+});
+
+window.addEventListener('gwcatat:switch-tab', (event) => {
+  if (PAGE_TITLES[event.detail?.tab]) switchTab(event.detail.tab);
+});
 
 // ===== 15. EKSPOR & IMPOR DATA CADANGAN =====
 document.getElementById('exportBtn')?.addEventListener('click', () => {
