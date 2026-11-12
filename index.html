@@ -6,14 +6,6 @@
   <meta name="theme-color" content="#fff8f8" />
   <meta name="description" content="StudyMate membantumu merencanakan belajar, fokus dengan Pomodoro, dan melacak progres." />
   <title>StudyMate — Plan. Focus. Achieve.</title>
-  <script>
-    try {
-      const session = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
-      if (!session || !session.email) window.location.replace('login.html');
-    } catch (error) {
-      window.location.replace('login.html');
-    }
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -41,7 +33,7 @@
         <span class="quote-line"></span>
         <small>You've got this. One step at a time.</small>
       </div>
-      <button id="logoutBtn" class="logout-button"><span>↪</span> Keluar</button>
+      <button id="switchProfileButton" class="logout-button"><span>↪</span> Ganti profil</button>
     </aside>
 
     <main class="main-content">
@@ -253,6 +245,21 @@
       <div class="timer-topic"><label for="studyTopic">Topik yang dipelajari</label><input id="studyTopic" maxlength="60" placeholder="Contoh: Persamaan linear" /></div>
       <div class="timer-actions"><button id="cancelTimerButton" class="secondary-button">Batalkan sesi</button><button id="startTimerButton" class="primary-button">Mulai fokus <span>→</span></button></div>
       <div class="timer-running-note" id="timerRunningNote">Sesi akan selesai otomatis saat timer mencapai nol.</div>
+    </section>
+  </div>
+
+  <div class="profile-overlay open" id="profileOverlay" aria-hidden="false">
+    <section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileDialogTitle">
+      <span class="profile-dialog-mark">✦</span>
+      <span class="section-kicker">PROFIL LOKAL</span>
+      <h2 id="profileDialogTitle">Siapa yang belajar hari ini?</h2>
+      <p>Data profil hanya disimpan di browser ini. Pilih profil atau buat profil baru untuk memisahkan progres di perangkat bersama.</p>
+      <div id="localProfileList" class="local-profile-list" aria-label="Pilih profil lokal"></div>
+      <form id="localProfileForm" class="local-profile-form">
+        <label for="localProfileName">Buat profil baru</label>
+        <div><input id="localProfileName" name="name" maxlength="32" autocomplete="off" placeholder="Nama profil" required /><button class="primary-button" type="submit">Buat profil <span>→</span></button></div>
+      </form>
+      <small class="profile-local-note">Tanpa akun, tanpa sinkronisasi online. Siapa pun yang memakai browser ini dapat membuka profil lokal.</small>
     </section>
   </div>
 

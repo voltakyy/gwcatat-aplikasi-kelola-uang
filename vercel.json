@@ -16,7 +16,7 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "/login.html",
+      "destination": "/index.html",
       "permanent": false
     }
   ]

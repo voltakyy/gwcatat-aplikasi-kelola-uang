@@ -1,8 +1,6 @@
 (() => {
-  const session = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
-  const userKey = session && session.email
-    ? `gwcatat_${session.email.replace(/[^a-zA-Z0-9]/g, '_')}_adventure`
-    : 'gwcatat_adventure';
+  const activeProfileId = sessionStorage.getItem('studymate_active_profile');
+  const userKey = `gwcatat_${activeProfileId || 'unselected'}_adventure`;
 
   const missions = [
     { id: 'income', title: 'Catat uang masuk', detail: 'Simpan satu transaksi pendapatan hari ini.', reward: 20, type: 'in', action: 'income', icon: '↗' },

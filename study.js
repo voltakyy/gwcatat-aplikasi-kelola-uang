@@ -1,10 +1,11 @@
 (() => {
-  const session = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
-  if (!session || !session.email) return;
-
-  const accountKey = session.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  const storageKey = `studyrpg_${accountKey}_progress`;
-  const plannerStorageKey = `studymate_${accountKey}_planner`;
+  const profilesStorageKey = 'studymate_local_profiles_v1';
+  const activeProfileStorageKey = 'studymate_active_profile';
+  let profiles = [];
+  let activeProfile = null;
+  let accountKey = '';
+  let storageKey = '';
+  let plannerStorageKey = '';
   const levels = [
     { title: 'Rookie', xp: 0, zone: 'Focus Field' },
     { title: 'Scholar', xp: 300, zone: 'Wisdom Woods' },
@@ -30,8 +31,8 @@
   ];
   const levelIcons = ['♟', '♧', '✧', '⌘', '♜', '♛'];
   const emptyState = { awards: {}, sessions: [], activeSession: null, bestQuiz: 0 };
-  let state = loadState();
-  let plannerState = loadPlannerState();
+  let state = { ...emptyState };
+  let plannerState = { days: {} };
   let plannerDate = new Date();
   let plannerPeriod = 'daily';
   let plannerSaveTimer;
@@ -154,6 +155,141 @@
     toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 3400);
   }
 
+  function loadProfiles() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(profilesStorageKey) || '[]');
+      if (!Array.isArray(saved)) return [];
+      return saved.filter(profile => profile && typeof profile.id === 'string' && typeof profile.name === 'string')
+        .map(profile => ({ id: profile.id, name: profile.name.trim().slice(0, 32) }))
+        .filter(profile => profile.name);
+    } catch (error) {
+      console.error('Local profiles could not be read:', error);
+      notify('Profil lokal tidak dapat dibaca. Penyimpanan browser mungkin bermasalah.');
+      return [];
+    }
+  }
+
+  function saveProfiles() {
+    try {
+      localStorage.setItem(profilesStorageKey, JSON.stringify(profiles));
+      return true;
+    } catch (error) {
+      console.error('Local profiles could not be saved:', error);
+      notify('Profil tidak dapat disimpan. Periksa penyimpanan browser dan coba lagi.');
+      return false;
+    }
+  }
+
+  function createProfileId() {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+
+  function renderProfileChooser() {
+    const container = document.getElementById('localProfileList');
+    container.innerHTML = profiles.length
+      ? profiles.map(profile => `<button type="button" class="local-profile-option" data-profile-id="${escapeHTML(profile.id)}"><span class="local-profile-avatar">${escapeHTML(profile.name.charAt(0).toUpperCase())}</span><span><strong>${escapeHTML(profile.name)}</strong><small>Progres tersimpan di browser ini</small></span><span class="local-profile-arrow">→</span></button>`).join('')
+      : '<p class="local-profile-empty">Belum ada profil di browser ini. Buat profil pertama untuk mulai.</p>';
+  }
+
+  function showProfileChooser() {
+    flushPlannerNote();
+    activeProfile = null;
+    sessionStorage.removeItem(activeProfileStorageKey);
+    window.clearInterval(timerInterval);
+    hideTimer();
+    renderProfileChooser();
+    const overlay = document.getElementById('profileOverlay');
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.getElementById('localProfileName').value = '';
+  }
+
+  function activateProfile(profile) {
+    activeProfile = profile;
+    accountKey = profile.id;
+    storageKey = `studyrpg_${accountKey}_progress`;
+    plannerStorageKey = `studymate_${accountKey}_planner`;
+    state = loadState();
+    plannerState = loadPlannerState();
+    sessionStorage.setItem(activeProfileStorageKey, profile.id);
+    setText('profileAvatar', profile.name.charAt(0).toUpperCase());
+    const overlay = document.getElementById('profileOverlay');
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    renderAll();
+    if (state.activeSession) {
+      nextFocusQuest = state.activeSession.questId;
+      updateTimerDialog();
+      startTicker();
+    }
+  }
+
+  function createProfile(name) {
+    const normalizedName = name.trim().slice(0, 32);
+    if (!normalizedName) return;
+    if (profiles.some(profile => profile.name.toLocaleLowerCase() === normalizedName.toLocaleLowerCase())) {
+      notify('Nama profil ini sudah digunakan. Pilih profil tersebut atau gunakan nama lain.');
+      return;
+    }
+    const id = createProfileId();
+    const profile = { id, name: normalizedName };
+    profiles.push(profile);
+    if (saveProfiles()) activateProfile(profile);
+    else profiles.pop();
+  }
+
+  function migrateLegacyProfile() {
+    let legacySession;
+    try {
+      legacySession = JSON.parse(sessionStorage.getItem('gwcatat_session') || 'null');
+    } catch (error) {
+      console.error('Previous local profile could not be migrated:', error);
+      sessionStorage.removeItem('gwcatat_session');
+      return null;
+    }
+    if (!legacySession || typeof legacySession.email !== 'string') return null;
+    const oldKey = legacySession.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const profile = {
+      id: createProfileId(),
+      name: (typeof legacySession.name === 'string' && legacySession.name.trim() ? legacySession.name.trim() : 'Profil Saya').slice(0, 32)
+    };
+    const migrations = [
+      [`studyrpg_${oldKey}_progress`, `studyrpg_${profile.id}_progress`],
+      [`studymate_${oldKey}_planner`, `studymate_${profile.id}_planner`],
+      [`gwcatat_${legacySession.email.replace(/[^a-zA-Z0-9]/g, '_')}_transactions`, `gwcatat_${profile.id}_transactions`],
+      [`gwcatat_${legacySession.email.replace(/[^a-zA-Z0-9]/g, '_')}_adventure`, `gwcatat_${profile.id}_adventure`]
+    ];
+    try {
+      migrations.forEach(([source, destination]) => {
+        const value = localStorage.getItem(source);
+        if (value !== null && localStorage.getItem(destination) === null) localStorage.setItem(destination, value);
+      });
+      profiles.push(profile);
+      if (!saveProfiles()) {
+        profiles.pop();
+        return null;
+      }
+      sessionStorage.removeItem('gwcatat_session');
+      return profile;
+    } catch (error) {
+      profiles = profiles.filter(item => item.id !== profile.id);
+      console.error('Previous local profile data could not be migrated:', error);
+      notify('Data profil lama tidak dapat dipindahkan. Data aslinya tetap tersimpan di browser ini.');
+      return null;
+    }
+  }
+
+  function flushPlannerNote() {
+    if (!plannerSaveTimer) return;
+    window.clearTimeout(plannerSaveTimer);
+    plannerSaveTimer = null;
+    const note = document.getElementById('plannerNote').value;
+    const date = new Date(plannerDate.getFullYear(), plannerDate.getMonth(), plannerDate.getDate());
+    if (activeProfile && updatePlannerDay(day => { day.note = note; }, date)) setText('plannerSaveStatus', 'Tersimpan otomatis');
+  }
+
   function todayAwards() {
     return state.awards[localDate()] || {};
   }
@@ -242,8 +378,7 @@
     const date = document.querySelector('.top-eyebrow');
     if (date) date.textContent = formatDate().toLocaleUpperCase('en-US');
     setText('headerStreak', String(stats.streak));
-    const avatar = document.getElementById('profileAvatar');
-    if (avatar) avatar.textContent = (session.name || session.email || 'S').trim().charAt(0).toUpperCase();
+    setText('profileAvatar', activeProfile ? activeProfile.name.charAt(0).toUpperCase() : 'S');
     setText('missionNavCount', `${stats.completed}/${quests.length}`);
   }
 
@@ -851,17 +986,19 @@
     }, 350);
   });
   document.getElementById('plannerNote').addEventListener('blur', () => {
-    if (!plannerSaveTimer) return;
-    window.clearTimeout(plannerSaveTimer);
-    plannerSaveTimer = null;
-    const note = document.getElementById('plannerNote').value;
-    const date = new Date(plannerDate.getFullYear(), plannerDate.getMonth(), plannerDate.getDate());
-    if (updatePlannerDay(day => { day.note = note; }, date)) setText('plannerSaveStatus', 'Tersimpan otomatis');
+    flushPlannerNote();
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    sessionStorage.removeItem('gwcatat_session');
-    window.location.href = 'login.html';
+  document.getElementById('switchProfileButton').addEventListener('click', showProfileChooser);
+  document.getElementById('localProfileForm').addEventListener('submit', event => {
+    event.preventDefault();
+    createProfile(event.currentTarget.elements.name.value);
+  });
+  document.getElementById('localProfileList').addEventListener('click', event => {
+    const option = event.target.closest('[data-profile-id]');
+    if (!option) return;
+    const profile = profiles.find(item => item.id === option.dataset.profileId);
+    if (profile) activateProfile(profile);
   });
   document.getElementById('mobileFocusButton').addEventListener('click', () => {
     openQuest(todayCompleted('focus') ? 'review' : 'focus');
@@ -910,10 +1047,12 @@
     }
   });
 
-  renderAll();
-  if (state.activeSession) {
-    nextFocusQuest = state.activeSession.questId;
-    updateTimerDialog();
-    startTicker();
+  profiles = loadProfiles();
+  const savedProfileId = sessionStorage.getItem(activeProfileStorageKey);
+  const savedProfile = profiles.find(profile => profile.id === savedProfileId) || migrateLegacyProfile();
+  if (savedProfile) {
+    sessionStorage.removeItem('gwcatat_session');
+    activateProfile(savedProfile);
   }
+  else showProfileChooser();
 })();
